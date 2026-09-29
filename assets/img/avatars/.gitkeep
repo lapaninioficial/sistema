@@ -1,0 +1,2 @@
+Fotos de perfil dos usuários do painel (upload via Usuários → Editar / Meu perfil).
+O endpoint cria esta pasta automaticamente se ela não existir.

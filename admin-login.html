@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>La Panini — Login Admin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css?v=20260927">
+</head>
+<body>
+
+  <div class="login" id="login" hidden>
+    <form class="login__card" id="login-form">
+      <div class="login__logo">LP</div>
+      <h1>La <b>Panini</b></h1>
+      <p class="login__sub">Área administrativa</p>
+
+      <label class="field__label" for="lg-user">E-mail</label>
+      <input class="field__input" id="lg-user" type="email" autocomplete="username" placeholder="voce@lapanini.com.br">
+
+      <label class="field__label" for="lg-pass">Senha</label>
+      <input class="field__input" id="lg-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+
+      <p class="login__note">Acesso restrito — use seu e-mail e senha de administrador.</p>
+
+      <button class="btn btn--primary btn--full" type="submit">Entrar</button>
+      <p class="login__err" id="login-err" role="alert"></p>
+      <a class="login__back" href="index.html">← Voltar à loja</a>
+    </form>
+  </div>
+
+  <div class="login" id="setup" hidden>
+    <form class="login__card" id="setup-form">
+      <div class="login__logo">LP</div>
+      <h1>La <b>Panini</b></h1>
+      <p class="login__sub">Primeiro acesso — criar administrador</p>
+      <p class="login__note">O sistema ainda não tem usuários. Crie agora o administrador que fará login no painel.</p>
+
+      <label class="field__label" for="su-name">Nome</label>
+      <input class="field__input" id="su-name" type="text" placeholder="Administrador">
+
+      <label class="field__label" for="su-email">E-mail</label>
+      <input class="field__input" id="su-email" type="email" autocomplete="username" placeholder="voce@lapanini.com.br">
+
+      <label class="field__label" for="su-pass">Senha (mín. 8 caracteres)</label>
+      <input class="field__input" id="su-pass" type="password" autocomplete="new-password" placeholder="••••••••">
+
+      <button class="btn btn--primary btn--full" type="submit">Criar administrador</button>
+      <p class="login__err" id="setup-err" role="alert"></p>
+    </form>
+  </div>
+
+  <div class="modal" id="modal" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/admin-mock.js?v=20261036"></script>
+  <script>
+  (function () {
+    function $(sel) { return document.querySelector(sel); }
+
+    function apiReq(method, path, payload) {
+      return fetch('api/' + path, {
+        method: method,
+        headers: { 'Accept': 'application/json' },
+        body: payload ? JSON.stringify(payload) : undefined
+      }).then(function (r) {
+        return r.text().then(function (raw) {
+          var j = null;
+          try { j = JSON.parse(raw); } catch (e2) { /* corpo não é JSON */ }
+          if (!j || typeof j !== 'object') {
+            var e0 = new Error('O servidor respondeu sem JSON válido (HTTP ' + r.status + ') — verifique se o MySQL do XAMPP está ativo e o banco importado.');
+            e0.status = r.status;
+            throw e0;
+          }
+          if (j.ok !== true) {
+            var e = new Error(j.error || ('Erro ' + r.status));
+            e.status = r.status;
+            throw e;
+          }
+          return j.data;
+        });
+      });
+    }
+
+    var toastTimer = null;
+    function toast(msg) {
+      var el = $('#toast');
+      el.textContent = msg;
+      el.classList.add('is-show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { el.classList.remove('is-show'); }, 2600);
+    }
+
+    // Se já está autenticado, vai direto pro painel (sem piscar o form);
+    // senão, se o sistema ainda não tem usuários, mostra o cadastro do
+    // primeiro admin; caso contrário, revela o formulário de login.
+    apiReq('GET', 'auth/me').then(function () {
+      window.location.href = 'admin.html';
+    }, function () {
+      apiReq('GET', 'install').then(function (d) {
+        if (d && d.installed === false) {
+          $('#setup').hidden = false;
+        } else {
+          $('#login').hidden = false;
+        }
+      }, function (err) {
+        $('#login').hidden = false;
+        $('#login-err').textContent = (err && err.message) || '';
+      });
+    });
+
+    $('#login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = $('#lg-user').value.trim();
+      var pass = $('#lg-pass').value;
+      var errEl = $('#login-err');
+      errEl.textContent = '';
+      apiReq('POST', 'auth/login', { email: email, password: pass }).then(function () {
+        window.location.href = 'admin.html';
+      }, function (err) {
+        errEl.textContent = (err && err.message) || 'Falha no login.';
+      });
+    });
+
+    $('#setup-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var errEl = $('#setup-err');
+      errEl.textContent = '';
+      var pass = $('#su-pass').value;
+      if (pass.length < 8) {
+        errEl.textContent = 'A senha precisa de pelo menos 8 caracteres.';
+        return;
+      }
+      apiReq('POST', 'install', {
+        name: $('#su-name').value.trim(),
+        email: $('#su-email').value.trim(),
+        password: pass
+      }).then(function () {
+        // Recarrega: auth/me agora autentica e entra direto no painel.
+        window.location.href = 'admin-login.html';
+      }, function (err) {
+        errEl.textContent = (err && err.message) || 'Falha ao criar o administrador.';
+      });
+    });
+  })();
+  </script>
+</body>
+</html>
