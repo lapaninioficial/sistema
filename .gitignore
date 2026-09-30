@@ -1,3 +1,6 @@
+# Protótipo antigo (repo aninhado, fora da loja atual)
+/subpasta/
+
 # Dependências / gerenciadores
 vendor/
 composer.phar
