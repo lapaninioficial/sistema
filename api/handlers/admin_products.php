@@ -7,7 +7,29 @@ function api_admin_products_register(Router $r): void
 {
     $r->get('/admin/products', function () {
         require_auth();
-        ok(array_values(cs_product_map(false)));
+        $q = trim((string)($_GET['q'] ?? ''));
+        $cat = trim((string)($_GET['cat'] ?? ''));
+        if ($q === '' && $cat === '') {
+            ok(array_values(cs_product_map(false)));
+            return;
+        }
+        /* Busca server-side: LIKE em products.name (prepared statement) e/ou
+           categoria; os IDs batidos filtram o mapa completo, que preserva
+           tamanhos/ingredientes/componentes/pool. */
+        $sql = 'SELECT id FROM products WHERE 1 = 1';
+        $params = [];
+        if ($cat !== '') {
+            $sql .= ' AND cat_id = ?';
+            $params[] = $cat;
+        }
+        if ($q !== '') {
+            $sql .= ' AND name LIKE ?';
+            $params[] = '%' . $q . '%';
+        }
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        $ids = array_flip(array_column($st->fetchAll(), 'id'));
+        ok(array_values(array_filter(cs_product_map(false), fn($p) => isset($ids[$p['id']]))));
     });
 
     $r->get('/admin/products/{id}', function (string $id) {

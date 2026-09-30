@@ -3032,6 +3032,15 @@ body.reveal .xs-item.is-in { opacity: 1; transform: none; }
 
 h1, h2, h3 { font-weight: 400; }
 
+/* Sobremesas e Bebidas: preço em peso 300 (DM Sans Light, carregada no
+   Google Fonts). Usa a fonte do corpo porque o Anton SC só existe em 400
+   e um 300 nele seria apenas 400 disfarçado. */
+.p-card[data-pcat="sobremesas"] .price__now,
+.p-card[data-pcat="bebidas"] .price__now {
+  font-family: var(--font-body);
+  font-weight: 300;
+}
+
 /* =====================================================================
    Nitidez: Anton SC só existe em 400 — qualquer 300/700 seria negrito
    sintetizado pelo navegador (texto borrado). Força o peso real.

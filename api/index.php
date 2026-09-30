@@ -28,6 +28,7 @@ try {
     require __DIR__ . '/../app/db.php';
     require __DIR__ . '/../app/auth.php';
     require __DIR__ . '/../app/store.php';
+    require __DIR__ . '/turnstile.php';
 
     foreach (glob(__DIR__ . '/handlers/*.php') as $f) {
         require $f;
@@ -73,6 +74,8 @@ final class Router
         }
 
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+        turnstile_guard($path, $method);
 
         foreach ($this->routes as $r) {
             if ($r['m'] !== $method) {

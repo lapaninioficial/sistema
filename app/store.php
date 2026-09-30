@@ -99,7 +99,9 @@ function cs_product_map(bool $activeOnly = true): array
         $map = $c['pmap'];
     } else {
         $map = [];
-        foreach (db()->query('SELECT p.*, c.name AS cat_name, c.id AS cat_id FROM products p JOIN categories c ON c.id = p.cat_id') as $row) {
+        // LEFT JOIN: produto com categoria órfã (cat_id sem linha em categories)
+        // continua visível no painel em vez de sumir silenciosamente.
+        foreach (db()->query("SELECT p.*, COALESCE(c.name, '') AS cat_name, COALESCE(c.id, p.cat_id) AS cat_id FROM products p LEFT JOIN categories c ON c.id = p.cat_id") as $row) {
             $row['tags'] = tags_to_array((string)$row['tags']);
             $row['type'] = (string)$row['type'];
             $row['addon_group'] = (string)$row['addon_group'];

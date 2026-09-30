@@ -4,6 +4,30 @@
  * Ficha Técnica · CMV · Coeficiente · Extras Financeiros
  */
 
+/** Tipo de ficha pela categoria do produto ('' = sem campos obrigatórios extras). */
+function ficha_type_for(string $catId): string
+{
+    $c = mb_strtolower(trim($catId));
+    if ($c === 'massa-fresca') { return 'massa'; }
+    if ($c === 'molhos-caseiros') { return 'molho'; }
+    if (in_array($c, ['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar'], true)) { return 'lasanha'; }
+    return '';
+}
+
+/** Campos obrigatórios da ficha por tipo: pares [coluna, rótulo]. */
+function ficha_required_for(string $type): array
+{
+    switch ($type) {
+        case 'massa':
+            return [['peso_gramas', 'Peso (g)'], ['validade_refrig', 'Validade refrigerada'], ['modo_de_uso', 'Modo de uso']];
+        case 'molho':
+            return [['volume_ml', 'Volume (mL)'], ['validade_refrig', 'Validade refrigerada'], ['rendimento_em_l', 'Rendimento (L)']];
+        case 'lasanha':
+            return [['peso_gramas', 'Peso (g)'], ['rendimento', 'Rendimento'], ['tempo_gratinado', 'Tempo de gratinado (min)']];
+    }
+    return [];
+}
+
 function api_admin_financial_register(Router $r): void
 {
     /* Coluna category (sql/15). Sem a migração, o CRUD segue sem categoria. */
@@ -282,7 +306,7 @@ function api_admin_financial_register(Router $r): void
 
     $fichaFullGet = function (string $pid) use ($fichaCalc) {
         $db = db();
-        $prod = $db->prepare("SELECT id, base_price FROM products WHERE id = ?");
+        $prod = $db->prepare("SELECT id, base_price, cat_id FROM products WHERE id = ?");
         $prod->execute([$pid]);
         $pRow = $prod->fetch(PDO::FETCH_ASSOC);
         if (!$pRow) { err('Produto não encontrado.', 404); }
@@ -319,6 +343,7 @@ function api_admin_financial_register(Router $r): void
         }
         $calc = $fichaCalc($ft, $items, $price);
         $calc['header'] = $ft;
+        $calc['cat_id'] = (string)($pRow['cat_id'] ?? '');
         return $calc;
     };
 
@@ -331,36 +356,66 @@ function api_admin_financial_register(Router $r): void
         require_auth();
         $pid = urldecode($productId);
         $db = db();
-        $chk = $db->prepare("SELECT id FROM products WHERE id = ?");
+        $chk = $db->prepare("SELECT id, cat_id FROM products WHERE id = ?");
         $chk->execute([$pid]);
-        if (!$chk->fetch()) { err('Produto não encontrado.', 404); }
+        $prodRow = $chk->fetch(PDO::FETCH_ASSOC);
+        if (!$prodRow) { err('Produto não encontrado.', 404); }
+        $ftype = ficha_type_for((string)$prodRow['cat_id']);
         $d = body();
         $h = is_array($d['header'] ?? null) ? $d['header'] : [];
         $items = is_array($d['items'] ?? null) ? $d['items'] : [];
+        $cols = ['codigo','rendimento','peso_gramas','validade_refrig','validade_congel','modo_preparo',
+                 'modo_de_uso','volume_ml','rendimento_em_l','tempo_gratinado',
+                 'alergenicos','contaminacao','armazenamento','tempo_total_min','tempo_montagem_min',
+                 'embalagem_cost','desperdicio_pct','margem_desejada','foto_url','aprovado_por','aprovado_em'];
+        $strLimit = ['codigo' => 20, 'rendimento' => 120, 'validade_refrig' => 60,
+                     'validade_congel' => 60, 'alergenicos' => 200, 'contaminacao' => 200,
+                     'armazenamento' => 200, 'foto_url' => 255, 'aprovado_por' => 120];
+        $vals = [];
+        foreach ($cols as $c) {
+            $v = $h[$c] ?? null;
+            if (in_array($c, ['peso_gramas','volume_ml','rendimento_em_l','embalagem_cost','desperdicio_pct','margem_desejada'], true)) {
+                $v = ($v === '' || $v === null) ? null : (float)$v;
+            } elseif (in_array($c, ['tempo_total_min','tempo_montagem_min','tempo_gratinado'], true)) {
+                $v = ($v === '' || $v === null) ? null : (int)$v;
+            } elseif ($c === 'aprovado_em' && ($v === '' || $v === null)) {
+                $v = null;
+            } elseif (is_string($v)) {
+                $lim = ($c === 'modo_preparo' || $c === 'modo_de_uso') ? 5000 : ($strLimit[$c] ?? 200);
+                $v = mb_substr(trim($v), 0, $lim);
+                if ($v === '') { $v = null; }
+            }
+            $vals[$c] = $v;
+        }
+        /* Colunas que existem na ficha (hospedagem compartilhada: sql/19
+           pode não ter rodado ainda — nada de erro de SQL silencioso). */
+        try {
+            $have = $db->query('SHOW COLUMNS FROM fichas_tecnicas')->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Throwable $e) {
+            $have = [];
+        }
+        /* Campos obrigatórios por tipo. Save vazio = apagar a ficha: sem
+           validação. Falha devolve erro CLARO com os campos que faltam. */
+        if ($items && $ftype !== '') {
+            $req = ficha_required_for($ftype);
+            $absent = array_values(array_filter(array_column($req, 0), fn($c) => !in_array($c, $have, true)));
+            if ($absent) {
+                err('Atualize o banco para fichas multi-categoria: rode sql/19-ficha-multi-categoria.sql no phpMyAdmin (colunas ausentes: ' . implode(', ', $absent) . ').', 400);
+            }
+            $missing = [];
+            foreach ($req as [$rc, $rlabel]) {
+                if (($vals[$rc] ?? null) === null) { $missing[] = $rlabel; }
+            }
+            if ($missing) {
+                err('Ficha incompleta — preencha: ' . implode(', ', $missing) . '.', 400, ['fields' => array_column($req, 0), 'missing' => $missing]);
+            }
+        }
+        if ($have) {
+            $cols = array_values(array_filter($cols, fn($c) => in_array($c, $have, true)));
+            $vals = array_intersect_key($vals, array_flip($cols));
+        }
         $db->beginTransaction();
         try {
-            $cols = ['codigo','rendimento','peso_gramas','validade_refrig','validade_congel','modo_preparo',
-                     'alergenicos','contaminacao','armazenamento','tempo_total_min','tempo_montagem_min',
-                     'embalagem_cost','desperdicio_pct','margem_desejada','foto_url','aprovado_por','aprovado_em'];
-            $strLimit = ['codigo' => 20, 'rendimento' => 120, 'validade_refrig' => 60,
-                         'validade_congel' => 60, 'alergenicos' => 200, 'contaminacao' => 200,
-                         'armazenamento' => 200, 'foto_url' => 255, 'aprovado_por' => 120];
-            $vals = [];
-            foreach ($cols as $c) {
-                $v = $h[$c] ?? null;
-                if (in_array($c, ['peso_gramas','embalagem_cost','desperdicio_pct','margem_desejada'], true)) {
-                    $v = ($v === '' || $v === null) ? null : (float)$v;
-                } elseif (in_array($c, ['tempo_total_min','tempo_montagem_min'], true)) {
-                    $v = ($v === '' || $v === null) ? null : (int)$v;
-                } elseif ($c === 'aprovado_em' && ($v === '' || $v === null)) {
-                    $v = null;
-                } elseif (is_string($v)) {
-                    $lim = $c === 'modo_preparo' ? 5000 : ($strLimit[$c] ?? 200);
-                    $v = mb_substr(trim($v), 0, $lim);
-                    if ($v === '') { $v = null; }
-                }
-                $vals[$c] = $v;
-            }
             $ex = $db->prepare("SELECT id FROM fichas_tecnicas WHERE product_id = ?");
             $ex->execute([$pid]);
             $row = $ex->fetch(PDO::FETCH_ASSOC);
@@ -421,12 +476,11 @@ function api_admin_financial_register(Router $r): void
                        MAX(ft.desperdicio_pct) AS desperdicio_pct, MAX(ft.margem_desejada) AS margem_desejada
                 FROM products p
                 LEFT JOIN fichas_tecnicas ft ON ft.product_id = p.id
-                WHERE p.active = 1
                 GROUP BY p.id ORDER BY p.name
             ")->fetchAll(PDO::FETCH_ASSOC);
             $useNew = true;
         } catch (Throwable $e) {
-            $rows = $db->query("SELECT id, name, cat_id, base_price FROM products WHERE active = 1 ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $db->query("SELECT id, name, cat_id, base_price FROM products ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
             $useNew = false;
         }
         $out = [];

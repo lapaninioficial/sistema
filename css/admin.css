@@ -774,6 +774,17 @@ ul, ol {
   color: var(--text-2);
 }
 
+/* Cabeçalho de seção (ex.: Insumos): título à esquerda, ação à direita, alinhados. */
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.card__head h3 { margin-bottom: 0; }
+
 .card__hint {
   font-size: 0.8rem;
   color: var(--muted);
@@ -944,6 +955,11 @@ ul, ol {
   outline: none;
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(217, 122, 46, 0.15);
+}
+
+.field__input.is-invalid {
+  border-color: var(--bad);
+  box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.12);
 }
 
 /* Mostrar/ocultar senha */
@@ -1227,6 +1243,22 @@ table.tbl {
   font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+/* Sobremesas e Bebidas: preço em peso 300 (Inter Light, já carregada).
+   Usa a fonte do corpo porque o Anton só existe em 400+ e um 300 nele
+   seria apenas o 700 disfarçado. */
+.tbl .price--light {
+  font-family: var(--font-body);
+  font-weight: 300;
+  letter-spacing: 0;
+}
+
+/* Peso 400 (Inter Regular): preço de Bebidas/Sobremesas, valor de Cupons e taxa de entrega. */
+.tbl .price--std {
+  font-family: var(--font-body);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .tbl .dim {

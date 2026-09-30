@@ -16,5 +16,9 @@ define('DB_CHARSET', 'utf8mb4');
 define('SESSION_NAME', 'lapanini_admin');
 define('TIMEZONE', 'America/Sao_Paulo');
 
+/* Cloudflare Turnstile: cole a Secret Key do painel Cloudflare.
+   Vazio = modo transição (mutações liberadas + aviso no error_log). */
+define('TURNSTILE_SECRET_KEY', '');
+
 date_default_timezone_set(TIMEZONE);
 mb_internal_encoding('UTF-8');

@@ -1743,9 +1743,16 @@ function showConfirmation(order, seller, waUrl) {
 
 /* ---------- Cardápio ---------- */
 
+/* Só exibe na barra as categorias que têm ao menos 1 produto visível:
+   categoria com tudo desativado (active=0) some da vitrine. */
+function visibleCategories() {
+  return CATEGORIES.filter(function (c) {
+    return PRODUCTS.some(function (p) { return p.cat === c.id; });
+  });
+}
 function renderCategories() {
   var chips = '<button class="chip' + (S.filter === 'all' ? ' active' : '') + '" type="button" data-cat="all">Todos</button>';
-  chips += CATEGORIES.map(function (c) {
+  chips += visibleCategories().map(function (c) {
     return '<button class="chip' + (S.filter === c.id ? ' active' : '') + '" type="button" data-cat="' + c.id + '">' + esc(c.short) + '</button>';
   }).join('');
   var catsBar = $('#categories');
@@ -1853,7 +1860,7 @@ function card(p) {
   var btn = '<button class="add-btn" type="button" data-add="' + p.id + '"' + (p.type === 'selection' ? ' data-montar="1"' : '') +
     ' aria-label="' + esc(p.name) + ' — ' + esc(btnLabel) + '">' + ICON_PLUS + '</button>';
 
-  return '<article class="p-card" data-add="' + p.id + '"' + (p.type === 'selection' ? ' data-montar="1"' : '') + '>' +
+  return '<article class="p-card" data-pcat="' + esc(p.cat || '') + '" data-add="' + p.id + '"' + (p.type === 'selection' ? ' data-montar="1"' : '') + '>' +
     '<div class="p-card__media' + (p.type === 'kit' ? ' m-whole' : '') + '">' + imgHtml(p.id, p.name, 'ph') +
       (tags ? '<div class="p-card__tags">' + tags + '</div>' : '') +
     '</div>' +
@@ -2328,6 +2335,12 @@ function handleHash() {
 
 /* ---------- Eventos (delegação) ---------- */
 
+/* Guarda da rolagem dos chips de categoria: sem isso, cliques seguidos
+   empilhavam smooth-scrolls concorrentes (o de 350ms brigava com o atual)
+   e a página "tremia". */
+var catScrollTimer = null;
+var catScrollGen = 0;
+
 document.addEventListener('click', function (e) {
   var t;
 
@@ -2423,15 +2436,20 @@ document.addEventListener('click', function (e) {
     var catFilter = t.getAttribute('data-cat');
     var catsBar = $('#categories');
     var catsX = catsBar ? catsBar.scrollLeft : 0;
-    if (catFilter !== S.filter) {
-      setFilter(catFilter);
-      var activeChip = $('#categories .chip.active');
-      if (activeChip && activeChip.focus) { activeChip.focus({ preventScroll: true }); }
-      var catsBarAfter = $('#categories');
-      if (catsBarAfter) { catsBarAfter.scrollLeft = catsX; }
-    } else {
+    // Chip já ativo: nada muda — só preserva a rolagem horizontal e sai
+    // (antes re-renderizava e disparava scroll suave à toa = "tremida").
+    if (catFilter === S.filter) {
       if (catsBar) { catsBar.scrollLeft = catsX; }
+      return;
     }
+    // Novo clique invalida a correção pendente do clique anterior.
+    var catGen = ++catScrollGen;
+    if (catScrollTimer) { clearTimeout(catScrollTimer); catScrollTimer = null; }
+    setFilter(catFilter);
+    var activeChip = $('#categories .chip.active');
+    if (activeChip && activeChip.focus) { try { activeChip.focus({ preventScroll: true }); } catch (eFocus) {} }
+    var catsBarAfter = $('#categories');
+    if (catsBarAfter) { catsBarAfter.scrollLeft = catsX; }
     // Categoria fixa no topo + título dos itens logo abaixo da barra
     // (repete após o layout assentar; sem tocar nos carrosséis)
     var scrollBarIntoView = function () {
@@ -2454,9 +2472,11 @@ document.addEventListener('click', function (e) {
       window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
     };
     requestAnimationFrame(function () {
-      requestAnimationFrame(scrollBarIntoView);
+      requestAnimationFrame(function () { if (catGen === catScrollGen) { scrollBarIntoView(); } });
     });
-    setTimeout(function () {
+    catScrollTimer = setTimeout(function () {
+      catScrollTimer = null;
+      if (catGen !== catScrollGen) { return; }
       // Só corrige se a barra ainda estiver longe do ponto de fixação
       // (evita puxar a página caso o cliente já tenha rolado para outro lugar).
       var bar = $('#categories');
@@ -3091,9 +3111,32 @@ function sellerWhatsUrl(order, seller) {
   return 'https://wa.me/' + String(seller.phone).replace(/\D/g, '') + '?text=' + encodeURIComponent(buildWhatsMessage(order));
 }
 
+/* Catálogo autoritativo: a API já devolve só itens/categorias ativos
+   (cs_catalog com activeOnly). Sem isso, desativar no painel não escondia
+   nada na vitrine, que usava só os estáticos de catalog.js/data.js. */
+function loadApiCatalog() {
+  if (typeof API === 'undefined' || !API.catalog) { return; }
+  API.catalog().then(function (c) {
+    if (!c || !Array.isArray(c.products) || !Array.isArray(c.categories)) { return; }
+    var prods = c.products.map(function (p) {
+      if (!p.comp && p.components) { p.comp = p.components; }
+      return p;
+    });
+    if (!prods.length) { return; }
+    var has = {};
+    prods.forEach(function (p) { has[p.cat] = true; });
+    var cats = c.categories.filter(function (ct) { return has[ct.id]; });
+    PRODUCTS = prods;
+    if (cats.length) { CATEGORIES = cats; }
+    if (S.filter !== 'all' && !has[S.filter]) { S.filter = 'all'; }
+    renderMenu();
+  }, function () {});
+}
+
 function init() {
   applyTheme(storage.get('lapanini_theme', 'dark'));
   if ('IntersectionObserver' in window) { document.body.classList.add('reveal'); }
+  loadApiCatalog();
   loadApiAddons();
   loadSellers();
   initXsHoverPreview();

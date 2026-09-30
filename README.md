@@ -41,12 +41,17 @@ lapanini/
    Para o financeiro: `sql/migration_financial_safe.sql`,
    `sql/migration_financial_v2_isficha.sql` e por fim
    `sql/seed_fichas_tecnicas.sql` (24 insumos + fichas dos 34 produtos `reg`).
-   Para categorias de insumos e ficha completa: `sql/15-ingredient-categories.sql`
-   (Massas/Molhos/Geral) e `sql/16-ficha-tecnica-full.sql` (cabeçalho da ficha,
-   itens com fator de correção, compra por embalagem).
-   Para produção própria: `sql/17-massas-molhos-casa.sql` (categorias Massa Fresca
-   e Molhos Caseiros + fichas; produtos nascem inativos, só no painel).
-   Para venda avulsa: `sql/18-venda-avulsa.sql` (ativa os 3 na vitrine).
+   Em seguida, no phpMyAdmin, importe NESTA ORDEM (um de cada vez; se um
+   import falhar, corrija antes de rodar o próximo):
+   1. `sql/15-ingredient-categories.sql` — coluna `category` nos insumos
+      (se já existir: erro 1060 — ignore o ALTER, rode só os UPDATEs);
+   2. `sql/16-ficha-tecnica-full.sql` — cria `fichas_tecnicas` + `ficha_insumos`;
+   3. `sql/17-massas-molhos-casa.sql` — categorias/produtos de Massa Fresca e
+      Molhos Caseiros (internos, fora da vitrine);
+   4. `sql/19-ficha-multi-categoria.sql` — campos por tipo (tempo_gratinado,
+      modo_de_uso, volume_ml, rendimento_em_l);
+   5. `sql/20-fichas-massa-molhos.sql` — fichas completas de massa/molhos.
+   Opcional: `sql/18-venda-avulsa.sql` (ativa os 3 na vitrine; após o 17).
 2. **Conexão:** edite `app/config.php` com o usuário/senha/banco da HostGator
    (host normalmente `localhost`, charset `utf8mb4`).
 3. **Envie os arquivos:** copie a estrutura raiz para `public_html/`.

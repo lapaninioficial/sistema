@@ -1,0 +1,31 @@
+# Dependências / gerenciadores
+vendor/
+composer.phar
+node_modules/
+package-lock.json
+yarn.lock
+
+# Ambiente e segredos locais
+.env
+.env.*
+!.env.example
+app/config.local.php
+*.log
+
+# Uploads gerados no servidor (recriados em produção)
+assets/img/custom/*
+!assets/img/custom/.gitkeep
+
+# Backups e dumps locais do banco
+sql/backup/
+*.sql.bak
+*.bak
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*~

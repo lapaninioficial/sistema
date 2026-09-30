@@ -367,6 +367,7 @@ function updateNavBadge(count) {
    SECTION 5 — Mock data for new screens
    ===================================================================== */
 
+/* LEGACY: substituído por GET /admin/products — mantido só como referência. */
 var MOCK_LASANHAS = [
   { id: 'bolonhesa-branca', name: 'Bolonhesa com Molho Branco', category: 'classicos', description: 'Lasanha clássica com molho branco cremoso e carne moída temperada.', image: '', sizes: [{id:'g500',label:'500g · 2-3 porções',factor:1,price:62.24},{id:'g1000',label:'1kg · 5 porções',factor:1.6,price:99.58},{id:'g1500',label:'1,5kg · 8 porções',factor:2.1,price:129.46}], active: true, badge: 'MAIS PEDIDO', position: 1, prepTime: '25-35 min' },
   { id: 'frango-requeijao', name: 'Frango com Requeijão', category: 'classicos', description: 'Frango desfiado com requeijão cremoso e milho verde.', image: '', sizes: [{id:'g500',label:'500g · 2-3 porções',factor:1,price:58.90},{id:'g1000',label:'1kg · 5 porções',factor:1.6,price:89.70}], active: true, badge: '', position: 2, prepTime: '25-35 min' },
@@ -1254,10 +1255,112 @@ function productImage(lasanha, index) {
     '<svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" style="width:40px;height:40px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></div>';
 }
 
-var S_LASANHAS = { q: '', size: '', active: '' };
+var S_LASANHAS = { q: '', size: '', active: '', cat: '' };
+var LASANHAS_DATA = [];
+var LASANHA_CATS = [];
+var LAS_CAT_ORDER = ['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar',
+  'selecoes-personalizadas', 'selecoes-fechadas', 'doces', 'sobremesas', 'bebidas',
+  'massa-fresca', 'molhos-caseiros'];
+
+/* Tarefa B — normaliza produto da API (GET /admin/products) para o card da tela Lasanhas. */
+function lasActive(v) {
+  return v === true || v === 1 || v === '1';
+}
+function lasSizePrice(p, s) {
+  if (s && s.price !== null && s.price !== undefined && s.price !== '') {
+    var pv = parseFloat(s.price);
+    if (isFinite(pv)) return pv;
+  }
+  var base = parseFloat(p.base_price);
+  if (!isFinite(base)) base = parseFloat(p.base) || 0;
+  var f = parseFloat(s && s.factor);
+  if (!isFinite(f) || f <= 0) f = 1;
+  return Math.round(base * f * 100) / 100;
+}
+function normLasanhaFromProduct(p) {
+  var sizes = (p.sizes || []).map(function (s) {
+    return { id: s.id, label: s.label || '', factor: parseFloat(s.factor) || 1, price: lasSizePrice(p, s) };
+  });
+  return {
+    id: String(p.id || ''),
+    name: String(p.name || ''),
+    category: String(p.cat_id || p.cat || ''),
+    catName: String(p.cat_name || p.catName || ''),
+    description: String(p.description || p.desc || ''),
+    image: '',
+    sizes: sizes,
+    active: lasActive(p.active),
+    badge: String(p.badge || ''),
+    position: parseInt(p.position, 10) || 0,
+    prepTime: String(p.time_label || p.time || ''),
+    base_price: parseFloat(p.base_price) || 0,
+    _api: true,
+    _raw: p
+  };
+}
+function lasanhaCatName(id, cats) {
+  var found = null;
+  (cats || LASANHA_CATS || []).forEach(function (c) { if (String(c.id) === String(id)) found = c; });
+  if (found) return found.name || id;
+  var lone = (LASANHAS_DATA || []).filter(function (p) { return p.category === id; })[0];
+  if (lone && lone.catName) return lone.catName;
+  return titleCase(String(id || '').replace(/-/g, ' ')) || 'Sem categoria';
+}
+function filterLasanhas(list) {
+  var out = list.slice();
+  if (S_LASANHAS.cat) {
+    out = out.filter(function (p) { return String(p.category) === String(S_LASANHAS.cat); });
+  }
+  if (S_LASANHAS.q) {
+    var q = S_LASANHAS.q.toLowerCase();
+    out = out.filter(function (p) { return (p.name || '').toLowerCase().indexOf(q) !== -1; });
+  }
+  if (S_LASANHAS.size) {
+    var sizeMap = { g500: '500', g1000: '1', g1500: '1,5', g2500: '2,5' };
+    var needle = sizeMap[S_LASANHAS.size] || S_LASANHAS.size;
+    out = out.filter(function (p) {
+      return p.sizes && p.sizes.some(function (s) { return (s.label || '').indexOf(needle) !== -1; });
+    });
+  }
+  if (S_LASANHAS.active === 'on') {
+    out = out.filter(function (p) { return !!p.active; });
+  } else if (S_LASANHAS.active === 'off') {
+    out = out.filter(function (p) { return !p.active; });
+  }
+  return out;
+}
+function findLasanha(id) {
+  var f = (LASANHAS_DATA || []).filter(function (l) { return String(l.id) === String(id); })[0];
+  if (f) return f;
+  return (MOCK_LASANHAS || []).filter(function (l) { return String(l.id) === String(id); })[0] || null;
+}
+function paintLasanhas() {
+  renderLasanhas();
+}
+function paintLasanhasSafe() {
+  try { renderLasanhas(); } catch (e) {}
+}
 
 function renderLasanhas() {
-  var list = MOCK_LASANHAS.slice();
+  if (!(LASANHAS_DATA || []).length && !renderLasanhas._loading) {
+    renderLasanhas._loading = true;
+    $('#content').innerHTML = '<div class="card"><p class="card__hint">Carregando produtos do cardápio…</p></div>';
+    Promise.all([getJ('admin/categories'), getJ('admin/products')]).then(function (res) {
+      renderLasanhas._loading = false;
+      var cats = res[0] || [];
+      var prods = res[1] || [];
+      LASANHA_CATS = cats.slice().sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
+      LASANHAS_DATA = (prods || []).map(normLasanhaFromProduct);
+      LASANHAS_DATA.sort(function (a, b) { return (a.position || 0) - (b.position || 0) || (a.name < b.name ? -1 : 1); });
+      renderLasanhas();
+    }, function (e) {
+      renderLasanhas._loading = false;
+      $('#content').innerHTML = '<div class="card"><p class="card__hint">Não foi possível carregar os produtos. Confira Apache/MySQL e recarregue a página.</p></div>';
+      appAlert(e);
+    });
+    return;
+  }
+  var list = filterLasanhas(LASANHAS_DATA || []);
   if (S_LASANHAS.q) {
     var q = S_LASANHAS.q.toLowerCase();
     list = list.filter(function (p) { return p.name.toLowerCase().indexOf(q) !== -1; });
@@ -1294,6 +1397,12 @@ function renderLasanhas() {
       '</div>' +
       '<button class="btn btn--primary btn--sm" type="button" data-new-lasanha>+ Nova Lasanha</button>' +
     '</div>';
+  toolbar += '<div class="chips" style="margin-bottom:20px">' +
+    '<button type="button" class="chip' + (S_LASANHAS.cat === '' ? ' is-on' : '') + '" data-lfilter-cat="">Todas (' + (LASANHAS_DATA || []).length + ')</button>' +
+    (LASANHA_CATS || []).map(function (c) {
+      var n = (LASANHAS_DATA || []).filter(function (p) { return String(p.category) === String(c.id); }).length;
+      return '<button type="button" class="chip' + (S_LASANHAS.cat === String(c.id) ? ' is-on' : '') + '" data-lfilter-cat="' + esc(c.id) + '">' + esc(c.name) + ' (' + n + ')</button>';
+    }).join('') + '</div>';
 
   if (list.length === 0) {
     $('#content').innerHTML = toolbar +
@@ -1336,7 +1445,66 @@ function renderLasanhas() {
     '</div>';
   }).join('');
 
-  $('#content').innerHTML = toolbar + '<div class="product-grid">' + cards + '</div>';
+  var order = {};
+  (LASANHA_CATS || []).forEach(function (c, i) { order[String(c.id)] = i; });
+  LAS_CAT_ORDER.forEach(function (id, i) { if (order[id] === undefined) order[id] = 100 + i; });
+  var groups = {};
+  list.forEach(function (p) {
+    var k = String(p.category || 'sem-categoria');
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(p);
+  });
+  Object.keys(groups).forEach(function (k) {
+    groups[k].sort(function (a, b) { return (a.position || 0) - (b.position || 0) || (a.name < b.name ? -1 : 1); });
+  });
+  var keys = Object.keys(groups).sort(function (a, b) {
+    var oa = order[a] !== undefined ? order[a] : 999;
+    var ob = order[b] !== undefined ? order[b] : 999;
+    return oa - ob || (lasanhaCatName(a) < lasanhaCatName(b) ? -1 : 1);
+  });
+  var idxById = {};
+  (LASANHAS_DATA || []).forEach(function (p, i) { idxById[String(p.id)] = i; });
+  var grouped = keys.map(function (k) {
+    var items = groups[k];
+    var gCards = items.map(function (las) {
+      var gi = idxById[String(las.id)];
+      return cardsForGroup(las, gi === undefined ? 0 : gi, list);
+    }).join('');
+    return '<section style="margin-bottom:28px">' +
+      '<h3 style="font-size:1rem;margin:0 0 12px;display:flex;align-items:center;gap:8px">' + esc(lasanhaCatName(k)) +
+      ' <span class="badge badge--brand">' + items.length + '</span></h3>' +
+      '<div class="product-grid">' + gCards + '</div></section>';
+  }).join('');
+  $('#content').innerHTML = toolbar + grouped;
+}
+function cardsForGroup(las, gIdx, list) {
+  var num = (las.position || ((list || []).indexOf(las) + 1)) || (gIdx + 1);
+  var sizeLabels = (las.sizes || []).map(function (s) { return String(s.label || '').split('·')[0].trim(); }).filter(function (x) { return !!x; }).join(' · ');
+  var minPrice = Infinity;
+  (las.sizes || []).forEach(function (s) {
+    var pv = (s.price !== null && s.price !== undefined && s.price !== '') ? parseFloat(s.price) : Infinity;
+    if (isFinite(pv) && pv < minPrice) minPrice = pv;
+  });
+  if (minPrice === Infinity) minPrice = las.base_price || 0;
+  var badgeHtml = las.badge ? '<div class="product-card__badge">' + esc(las.badge) + '</div>' : '';
+  var toggleChecked = las.active ? ' checked' : '';
+  return '<div class="product-card">' +
+    '<div class="product-card__image">' + productImage(las, gIdx) + badgeHtml +
+      '<div class="product-card__toggle">' +
+        '<label class="toggle"><input type="checkbox"' + toggleChecked + ' data-toggle-lasanha="' + esc(las.id) + '">' +
+        '<span class="toggle__track"><span class="toggle__circle"></span></span></label>' +
+      '</div></div>' +
+    '<div class="product-card__info">' +
+      '<div style="font-size:.65rem;color:var(--muted);margin-bottom:2px;letter-spacing:0.05em">#' + num + ' · ' + esc(lasanhaCatName(las.category)) + '</div>' +
+      '<div class="product-card__name" style="font-family:var(--font-heading)">' + esc(las.name) + '</div>' +
+      '<div class="product-card__desc">' + esc(las.description || '') + '</div>' +
+      '<div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">' + esc(sizeLabels) + '</div>' +
+      '<div class="product-card__price">A partir de ' + money(minPrice) + '</div></div>' +
+    '<div class="product-card__actions">' +
+      '<button class="btn btn--ghost btn--sm" type="button" data-edit-lasanha="' + esc(las.id) + '">Editar</button>' +
+      '<button class="btn btn--ghost btn--sm" type="button" data-dup-lasanha="' + esc(las.id) + '">Duplicar</button>' +
+      '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-del-lasanha="' + esc(las.id) + '">Excluir</button>' +
+    '</div></div>';
 }
 
 /* =====================================================================
@@ -1415,7 +1583,7 @@ function renderAdicionais() {
         return '<tr>' +
           '<td><b>' + esc(a.label) + '</b></td>' +
           '<td><span class="badge badge--brand">' + esc(a.grp) + '</span></td>' +
-          '<td class="price">' + money(a.price) + '</td>' +
+          '<td class="price price--light">' + money(a.price) + '</td>' +
           '<td>' + (a.required ? '<span class="badge badge--amber">Sim</span>' : '<span class="dim">N\u00e3o</span>') + '</td>' +
           '<td><label class="toggle"><input type="checkbox" data-toggle-adicional="' + esc(a.id) + '"' + toggleChecked + '>' +
             '<span class="toggle__track"><span class="toggle__circle"></span></span></label></td>' +
@@ -1453,7 +1621,7 @@ function renderCupons() {
     return '<tr>' +
       '<td><b>' + esc(c.code) + '</b></td>' +
       '<td><span class="badge badge--brand">' + esc(c.ctype === 'percent' ? 'Percentual' : 'Fixo') + '</span></td>' +
-      '<td class="price">' + tipoLabel + '</td>' +
+      '<td class="price price--std">' + tipoLabel + '</td>' +
       '<td>' + usageText + '</td>' +
       '<td>' + expText + '</td>' +
       '<td>' + activeLabel + '</td>' +
@@ -1481,7 +1649,7 @@ function renderAreas() {
       : '<span class="badge badge--red">Inativa</span>';
     return '<tr>' +
       '<td><b>' + esc(a.name) + '</b></td>' +
-      '<td class="price">' + money(a.fee) + '</td>' +
+      '<td class="price price--std">' + money(a.fee) + '</td>' +
       '<td>' + esc(a.eta) + ' min</td>' +
       '<td>' + money(a.minOrder) + '</td>' +
       '<td class="dim">' + esc(a.cepRange || '\u2014') + '</td>' +
@@ -2248,60 +2416,280 @@ function bannerModal(banner) {
    SECTION 21 — CRUD Save & Delete
    ===================================================================== */
 
+/* Hardening — sanitização, tipos rígidos e erros defensivos (não toca renders). */
+function cleanStr(v, max) {
+  var s = String(v == null ? '' : v).replace(/[\u0000-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
+  if (max && s.length > max) { s = s.slice(0, max); }
+  return s;
+}
+function numOr(v, dflt) {
+  var n = Number(v);
+  return isFinite(n) ? n : dflt;
+}
+/* Envelope seguro p/ upsert_product: strings limpas/limitadas, números reais
+   (nunca NaN), enums restritos. Deve envolver TODO payload antes do putJ/postJ. */
+function hardenProductPayload(p) {
+  var c = Object.assign({}, p || {});
+  c.name = cleanStr(c.name, 120);
+  c.cat = cleanStr(c.cat, 40);
+  c.type = (c.type === 'kit' || c.type === 'selection') ? c.type : 'reg';
+  c.base = numOr(c.base, 0);
+  c.description = cleanStr(c.description, 240);
+  c.long = cleanStr(c.long, 2000);
+  c.old = (c.old === null || c.old === undefined || c.old === '') ? null : numOr(c.old, null);
+  c.addonGroup = (c.addonGroup === 'salgado' || c.addonGroup === 'doce') ? c.addonGroup : '';
+  c.obsNote = cleanStr(c.obsNote, 200);
+  c.badge = cleanStr(c.badge, 40);
+  c.min = Math.max(0, Math.floor(numOr(c.min, 0)));
+  c.maxPerFlavor = Math.max(0, Math.floor(numOr(c.maxPerFlavor, 0)));
+  c.sizeLabel = cleanStr(c.sizeLabel, 60);
+  c.discount = numOr(c.discount, 0);
+  c.time = cleanStr(c.time, 60);
+  c.tags = Array.isArray(c.tags)
+    ? c.tags.map(function (t) { return cleanStr(t, 40); }).filter(function (t) { return !!t; }).slice(0, 20)
+    : [];
+  c.position = Math.floor(numOr(c.position, 0));
+  c.active = !!c.active;
+  c.sizes = Array.isArray(c.sizes) ? c.sizes.slice(0, 20).map(function (s, i) {
+    s = s || {};
+    var f = numOr(s.factor, 1);
+    return {
+      id: cleanStr(s.id || ('s' + (i + 1)), 20),
+      label: cleanStr(s.label, 60),
+      factor: (f > 0) ? f : 1,
+      price: (s.price === null || s.price === undefined || s.price === '') ? null : numOr(s.price, null)
+    };
+  }) : [];
+  c.ingredients = Array.isArray(c.ingredients) ? c.ingredients.slice(0, 40).map(function (g) {
+    g = g || {};
+    return { label: cleanStr(g.label, 120), rem: (g.rem === null || g.rem === undefined || g.rem === '') ? null : numOr(g.rem, null) };
+  }).filter(function (g) { return !!g.label; }) : [];
+  c.components = Array.isArray(c.components)
+    ? c.components.map(function (x) { return cleanStr(x, 200); }).filter(function (x) { return !!x; }).slice(0, 40)
+    : [];
+  c.pool = Array.isArray(c.pool)
+    ? c.pool.map(function (x) { return cleanStr(x, 60); }).filter(function (x) { return !!x; }).slice(0, 40)
+    : [];
+  return c;
+}
+/* Mensagem segura p/ toast: nunca vaza stack/internos; 0/5xx viram texto genérico. */
+function safeErrMsg(e, fallback) {
+  var fb = fallback || 'Falha na operação. Tente novamente.';
+  if (!e) { return fb; }
+  if (e.status === 0) { return 'Sem conexão com o servidor. Confira a internet e tente de novo.'; }
+  if (e.status === 401 || e.status === 403) { return 'Sessão expirada. Entre novamente.'; }
+  if (e.status >= 500) { return 'Erro no servidor. Tente novamente em instantes.'; }
+  return cleanStr(e.message, 160) || fb;
+}
+/* Log técnico limitado: só status + mensagem higienizada, sem objetos brutos. */
+function logErr(tag, e) {
+  try { console.error(tag, { status: (e && e.status) || 0, message: cleanStr((e && e.message) || 'erro', 200) }); }
+  catch (_) {}
+}
+/* Sessão expirada (401/403): avisa e redireciona após 1500ms. Retorna true se tratou. */
+function handleAuthExpired(e) {
+  if (e && (e.status === 401 || e.status === 403)) {
+    toast('Sessão expirada. Redirecionando...', true);
+    setTimeout(function () { window.location.href = 'admin-login.html'; }, 1500);
+    return true;
+  }
+  return false;
+}
+/* Trava anti-duplo-clique para operações sem botão busy (deletes). */
+var DEL_BUSY = {};
+/* Trava por item do toggle: cliques no mesmo id são ignorados até o PUT/GET terminar. */
+var TOGGLE_BUSY = {};
+
+/* Cloudflare Turnstile: token obrigatório em mutações (POST/PUT/DELETE).
+   Sem o widget na página (dev/file://), as operações seguem sem token. */
+function cfCollectToken() {
+  try {
+    if (typeof turnstile === 'undefined' || !turnstile) { return ''; }
+    const turnstileToken = turnstile.getResponse();
+    return turnstileToken || '';
+  } catch (e) { return ''; }
+}
+function cfHasWidget() {
+  try { return (typeof turnstile !== 'undefined') && !!turnstile && (typeof turnstile.getResponse === 'function'); }
+  catch (e) { return false; }
+}
+function cfReset() {
+  try { if (cfHasWidget() && (typeof turnstile.reset === 'function')) { turnstile.reset(); } }
+  catch (e) {}
+}
+/* finally real (com fallback ES5): fn roda após sucesso OU falha. */
+function withFinally(p, fn) {
+  if (p && typeof p.finally === 'function') { return p.finally(fn); }
+  return p.then(function (v) { try { fn(); } catch (_) {} return v; },
+    function (e) { try { fn(); } catch (_) {} throw e; });
+}
+
+/* Tarefa C — monta payload da API a partir do modal + registro atual (_raw). */
+function lasanhaModalSizes() {
+  var sizesContainer = $('#modal-sizes') || $('#modal-sizes-empty');
+  var sizesRows = sizesContainer ? sizesContainer.querySelectorAll(':scope > div') : [];
+  var out = [];
+  sizesRows.forEach(function (row) {
+    var inputs = row.querySelectorAll('input');
+    if (inputs.length >= 3) {
+      var label = (inputs[1].value || '').trim();
+      var price = parseFloat(inputs[2].value);
+      var factor = inputs.length >= 4 ? (parseFloat(inputs[3].value) || 1) : 1;
+      if (label) out.push({ label: label, price: isFinite(price) ? price : null, factor: factor });
+    }
+  });
+  return out;
+}
+function lasanhaBaseFromSizes(sizes, fallback) {
+  var best = Infinity;
+  (sizes || []).forEach(function (s) {
+    var p = parseFloat(s.price);
+    var f = parseFloat(s.factor) || 1;
+    if (isFinite(p) && p > 0 && f > 0 && (p / f) < best) best = p / f;
+  });
+  if (isFinite(best)) return Math.round(best * 100) / 100;
+  var fb = parseFloat(fallback);
+  if (isFinite(fb) && fb > 0) return fb;
+  return 0;
+}
+function lasanhaToApiPayload(cur, modal) {
+  var raw = (cur && cur._raw) || {};
+  var sizes = (modal.sizes || []).map(function (s, i) {
+    var old = (raw.sizes || [])[i] || {};
+    return { id: old.id || s.id || ('s' + (i + 1)), label: s.label, factor: s.factor || 1, price: s.price };
+  });
+  var base = lasanhaBaseFromSizes(sizes, raw.base_price);
+  var cat = modal.cat || raw.cat_id || raw.cat || ((cur && cur.category) || 'classicos');
+  var addonGroup = raw.addon_group || raw.addonGroup || ((cat === 'doces' || cat === 'sobremesas') ? 'doce' : 'salgado');
+  return {
+    name: modal.name,
+    cat: cat,
+    type: raw.type || 'reg',
+    base: base,
+    description: modal.description || '',
+    long: raw.long_desc || raw.long || '',
+    old: (raw.old_price === undefined || raw.old_price === null) ? (raw.old || null) : raw.old_price,
+    addonGroup: addonGroup,
+    obsNote: raw.obs_note || raw.obsNote || '',
+    encomenda: !!raw.encomenda,
+    freteGratis: !!raw.frete_gratis || !!raw.freteGratis,
+    badge: modal.badge || '',
+    min: raw.min_units || raw.min || 0,
+    maxPerFlavor: raw.max_per_flavor || raw.maxPerFlavor || 0,
+    sizeLabel: raw.size_label || raw.sizeLabel || '',
+    discount: raw.discount || 0,
+    time: modal.prepTime || raw.time_label || raw.time || '25–35 min de forno',
+    tags: raw.tags || [],
+    position: (raw?.position || (cur && cur.position) || 0),
+    active: (cur ? !!cur.active : true),
+    sizes: sizes,
+    ingredients: raw.ingredients || [],
+    components: raw.components || [],
+    pool: raw.pool || []
+  };
+}
+function applyLasanhaSaved(saved, isNew) {
+  var norm = normLasanhaFromProduct(saved);
+  var idx = -1;
+  (LASANHAS_DATA || []).forEach(function (l, i) { if (String(l.id) === String(norm.id)) idx = i; });
+  if (idx >= 0) { LASANHAS_DATA[idx] = norm; }
+  else { LASANHAS_DATA.push(norm); }
+  closeModal();
+  toast(isNew ? 'Lasanha criada no cardápio!' : 'Lasanha atualizada no cardápio!');
+  renderLasanhas();
+}
+function saveLasanhaFallback(id, data, sizes) {
+  console.error('[lasanhas] API falhou, fallback local (MOCK_LASANHAS).');
+  if (id) {
+    var idx = -1;
+    MOCK_LASANHAS.forEach(function (l, i) { if (String(l.id) === String(id)) idx = i; });
+    if (idx >= 0) {
+      data.id = id;
+      if (sizes && sizes.length) data.sizes = sizes;
+      else if (!data.sizes) data.sizes = MOCK_LASANHAS[idx].sizes;
+      MOCK_LASANHAS[idx] = Object.assign({}, MOCK_LASANHAS[idx], data);
+    }
+  } else {
+    data.id = 'las-' + Date.now();
+    if (sizes && sizes.length) data.sizes = sizes;
+    else if (!data.sizes) data.sizes = [];
+    data.active = true;
+    data.position = MOCK_LASANHAS.length + 1;
+    MOCK_LASANHAS.push(data);
+  }
+  closeModal();
+  toast(id ? 'Lasanha atualizada (local, API fora do ar)!' : 'Lasanha criada (local, API fora do ar)!');
+  try { renderLasanhas(); } catch (e) {}
+}
+
 function saveLasanha() {
   var name = val('las-name');
   if (!name) { toast('Informe o nome da lasanha'); return; }
-  var data = { name: name, category: val('las-cat'), description: val('las-desc'), badge: val('las-badge'), prepTime: val('las-prep'), active: true };
+  var modal = { name: name, cat: val('las-cat'), description: val('las-desc'), badge: val('las-badge'), prepTime: val('las-prep') };
   var idEl = $('[data-save-lasanha]');
   var id = idEl ? idEl.getAttribute('data-save-lasanha') : '';
+  var cur = id ? findLasanha(id) : null;
+  var btn = idEl;
+  function setBusy(b) { if (btn) { btn.disabled = !!b; btn.textContent = b ? 'Salvando…' : (id ? 'Salvar' : 'Criar'); } }
 
-  var imgInput = $('#f-las-image');
-  var audInput = $('#f-las-audio');
+  var modalSizes = lasanhaModalSizes();
+  if (cur && cur._raw && cur._raw.sizes && !modalSizes.length && cur.sizes && cur.sizes.length) {
+    modalSizes = cur.sizes.map(function (s) { return { label: s.label, price: s.price, factor: s.factor }; });
+  }
+  modal.sizes = modalSizes;
+  var payload = lasanhaToApiPayload(cur, modal);
+  if (id && cur && cur._raw && cur._raw.sizes && !payload.sizes.length) {
+    payload.sizes = cur._raw.sizes;
+  }
+  if (!(payload.base > 0)) { toast('Informe ao menos um tamanho com preço válido.', true); return; }
+  if ((payload.type === 'kit' || payload.type === 'selection') && !payload.sizes.length) {
+    payload.sizes = (cur && cur._raw && cur._raw.sizes) || [];
+  }
+  payload = hardenProductPayload(payload);
+  if (!payload.name) { toast('Informe o nome da lasanha'); return; }
+  var baseNum = Number(payload.base);
+  var posNum = Number(payload.position);
+  if (!isFinite(baseNum) || baseNum <= 0) { toast('Informe ao menos um tamanho com preço válido.', true); return; }
+  if (!isFinite(posNum)) { toast('Posição inválida — informe um número.', true); return; }
+  var uiData = { name: payload.name, category: payload.cat, description: payload.description, badge: payload.badge, prepTime: payload.time, active: payload.active, sizes: modalSizes };
 
-  function applyAndClose() {
-    var sizesContainer = $('#modal-sizes') || $('#modal-sizes-empty');
-    var sizesRows = sizesContainer ? sizesContainer.querySelectorAll(':scope > div') : [];
-    var newSizes = [];
-    sizesRows.forEach(function (row) {
-      var inputs = row.querySelectorAll('input');
-      if (inputs.length >= 3) {
-        var num = parseInt(inputs[0].value) || (newSizes.length + 1);
-        var label = inputs[1].value.trim();
-        var price = parseFloat(inputs[2].value) || 0;
-        var factor = inputs.length >= 4 ? (parseFloat(inputs[3].value) || 1) : 1;
-        if (label) newSizes.push({ num: num, label: label, price: price, factor: factor, id: 'sz-' + Date.now() + '-' + newSizes.length });
-      }
-    });
-    data.sizes = newSizes.length > 0 ? newSizes : undefined;
-
-    if (id) {
-      var idx = -1;
-      MOCK_LASANHAS.forEach(function (l, i) { if (l.id === id) idx = i; });
-      if (idx >= 0) { data.id = id; if (!data.sizes) data.sizes = MOCK_LASANHAS[idx].sizes; MOCK_LASANHAS[idx] = Object.assign({}, MOCK_LASANHAS[idx], data); }
-    } else {
-      data.id = 'las-' + Date.now(); if (!data.sizes) data.sizes = []; data.active = true; data.position = MOCK_LASANHAS.length + 1;
-      MOCK_LASANHAS.push(data);
+  setBusy(true);
+  // Turnstile: bloqueia sem token (widget presente), envia cf_turnstile_token no corpo.
+  const turnstileToken = cfCollectToken();
+  if (cfHasWidget() && !turnstileToken) {
+    setBusy(false);
+    toast('Por favor, aguarde a validação de segurança.', true);
+    return;
+  }
+  payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+  var req = withFinally(
+    id ? putJ('admin/products/' + encodeURIComponent(id), payload) : postJ('admin/products', payload),
+    function () { setBusy(false); cfReset(); }
+  );
+  req.then(function (saved) {
+    applyLasanhaSaved(saved, !id);
+  }, function (e) {
+    logErr('[lasanhas] save falhou:', e);
+    var msg = safeErrMsg(e, 'Falha ao salvar.');
+    if (e && e.status === 404 && id) {
+      setBusy(true);
+      withFinally(postJ('admin/products', payload), function () { setBusy(false); cfReset(); }).then(function (saved2) {
+        applyLasanhaSaved(saved2, true);
+      }, function (e2) {
+        logErr('[lasanhas] save retry falhou:', e2);
+        if (handleAuthExpired(e2)) { return; }
+        toast(msg, true);
+        if (!cur || !cur._api) { saveLasanhaFallback(id, uiData, modalSizes); }
+        else { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+      });
+      return;
     }
-    closeModal(); toast(id ? 'Lasanha atualizada!' : 'Lasanha criada!'); renderLasanhas();
-  }
-
-  var pending = 0;
-  function done() { if (pending <= 0) applyAndClose(); }
-
-  if (imgInput && imgInput.files && imgInput.files[0]) {
-    pending++;
-    var reader = new FileReader();
-    reader.onload = function (e) { data.image = e.target.result; pending--; done(); };
-    reader.readAsDataURL(imgInput.files[0]);
-  }
-  if (audInput && audInput.files && audInput.files[0]) {
-    pending++;
-    var reader2 = new FileReader();
-    reader2.onload = function (e) { data.audio = e.target.result; pending--; done(); };
-    reader2.readAsDataURL(audInput.files[0]);
-  }
-
-  done();
+    if (handleAuthExpired(e)) { return; }
+    toast(msg, true);
+    if (!id || !cur || !cur._api) { saveLasanhaFallback(id, uiData, modalSizes); }
+    else { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+  });
 }
 
 function saveTamanho() {
@@ -2411,7 +2799,41 @@ function saveConfig() {
   });
 }
 
-function deleteLasanha(id) { if (!window.confirm('Excluir esta lasanha?')) return; MOCK_LASANHAS = MOCK_LASANHAS.filter(function (l) { return l.id !== id; }); toast('Excluído'); renderLasanhas(); }
+function deleteLasanha(id, btn) {
+  var cur = findLasanha(id);
+  if (!window.confirm('Excluir "' + ((cur && cur.name) || id) + '" do cardápio?')) return;
+  if (DEL_BUSY[id]) { return; }
+  DEL_BUSY[id] = true;
+  if (btn) { btn.disabled = true; }
+  function unbtn() { if (btn) { btn.disabled = false; } }
+  // Turnstile: DELETE valida o desafio (sem corpo p/ token); reset no finally.
+  const turnstileToken = cfCollectToken();
+  if (cfHasWidget() && !turnstileToken) {
+    delete DEL_BUSY[id];
+    unbtn();
+    toast('Por favor, aguarde a validação de segurança.', true);
+    return;
+  }
+  function delRelease() { delete DEL_BUSY[id]; unbtn(); cfReset(); }
+  function delBody() { return { cf_turnstile_token: turnstileToken, cf_present: cfHasWidget() }; }
+  withFinally(apiRequest('DELETE', 'admin/products/' + encodeURIComponent(id), delBody()), delRelease).then(function () {
+    LASANHAS_DATA = (LASANHAS_DATA || []).filter(function (l) { return String(l.id) !== String(id); });
+    toast('Excluído do cardápio');
+    renderLasanhas();
+  }, function (e) {
+    logErr('[lasanhas] delete falhou:', e);
+    if (handleAuthExpired(e)) { return; }
+    toast(safeErrMsg(e, 'Falha ao excluir.'), true);
+    if (!cur || !cur._api) {
+      console.error('[lasanhas] API falhou, fallback local (MOCK_LASANHAS).');
+      MOCK_LASANHAS = MOCK_LASANHAS.filter(function (l) { return String(l.id) !== String(id); });
+      toast('Excluído (local, API fora do ar)');
+      try { renderLasanhas(); } catch (err) {}
+    } else {
+      console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais.");
+    }
+  });
+}
 function deleteTamanho(id) { if (!window.confirm('Excluir este tamanho?')) return; MOCK_SIZES = MOCK_SIZES.filter(function (s) { return s.id !== id; }); toast('Excluído'); renderTamanhos(); }
 function deleteAdicional(id) {
   if (!window.confirm('Excluir este adicional?')) return;
@@ -2423,12 +2845,89 @@ function deleteCupom(id) { if (!window.confirm('Excluir este cupom?')) return; M
 function deleteArea(id) { if (!window.confirm('Excluir esta área?')) return; MOCK_AREAS_DATA = MOCK_AREAS_DATA.filter(function (a) { return a.id !== id; }); toast('Excluído'); renderAreas(); }
 function deleteBanner(id) { if (!window.confirm('Excluir este banner?')) return; MOCK_BANNERS_DATA = MOCK_BANNERS_DATA.filter(function (b) { return String(b.id) !== String(id); }); toast('Excluído'); renderBanners(); }
 
-function duplicateLasanha(id) {
-  var orig = MOCK_LASANHAS.filter(function (l) { return l.id === id; })[0];
-  if (!orig) return;
-  var copy = JSON.parse(JSON.stringify(orig));
-  copy.id = 'las-' + Date.now(); copy.name = copy.name + ' (Cópia)'; copy.position = MOCK_LASANHAS.length + 1;
-  MOCK_LASANHAS.push(copy); toast('Lasanha duplicada!'); renderLasanhas();
+function duplicateLasanha(id, btn) {
+  var orig = findLasanha(id);
+  if (!orig) { toast('Produto não encontrado.', true); return; }
+  if (btn) { btn.disabled = true; }
+  function unbtn() { if (btn) { btn.disabled = false; } }
+  function fallbackCopy() {
+    console.error('[lasanhas] duplicate falhou, fallback local (MOCK_LASANHAS).');
+    var copy = JSON.parse(JSON.stringify(orig));
+    copy.id = 'las-' + Date.now();
+    copy.name = copy.name + ' (Cópia)';
+    copy.position = (LASANHAS_DATA || []).length + 1;
+    copy._api = false;
+    delete copy._raw;
+    MOCK_LASANHAS.push(copy);
+    toast('Lasanha duplicada (local, API fora do ar)!');
+    try { renderLasanhas(); } catch (e) {}
+    return null;
+  }
+  function doPost(full) {
+    var raw = full || orig._raw || {};
+    var maxPos = 0;
+    (LASANHAS_DATA || []).forEach(function (l) { if ((l.position || 0) > maxPos) maxPos = l.position; });
+    var payload = {
+      name: (raw.name || orig.name) + ' (Cópia)',
+      cat: raw.cat_id || raw.cat || orig.category || 'classicos',
+      type: raw.type || 'reg',
+      base: parseFloat(raw.base_price) || orig.base_price || 0,
+      description: raw.description || orig.description || '',
+      long: raw.long_desc || raw.long || '',
+      old: (raw.old_price === undefined || raw.old_price === null) ? (raw.old || null) : raw.old_price,
+      addonGroup: raw.addon_group || raw.addonGroup || 'salgado',
+      obsNote: raw.obs_note || raw.obsNote || '',
+      encomenda: !!raw.encomenda,
+      freteGratis: !!raw.frete_gratis || !!raw.freteGratis,
+      badge: raw.badge || '',
+      min: raw.min_units || raw.min || 0,
+      maxPerFlavor: raw.max_per_flavor || raw.maxPerFlavor || 0,
+      sizeLabel: raw.size_label || raw.sizeLabel || '',
+      discount: raw.discount || 0,
+      time: raw.time_label || raw.time || orig.prepTime || '25–35 min de forno',
+      tags: raw.tags || [],
+      position: maxPos + 1,
+      active: true,
+      sizes: raw.sizes || orig.sizes || [],
+      ingredients: raw.ingredients || [],
+      components: raw.components || [],
+      pool: raw.pool || []
+    };
+    payload = hardenProductPayload(payload);
+    var dupBase = Number(payload.base);
+    var dupPos = Number(payload.position);
+    if (!isFinite(dupBase) || dupBase <= 0) { unbtn(); toast('Original sem preço base — abra Editar e informe os tamanhos.', true); return; }
+    if (!isFinite(dupPos)) { unbtn(); toast('Posição inválida — recarregue e tente de novo.', true); return; }
+    toast('Duplicando…');
+    const turnstileToken = cfCollectToken();
+    if (cfHasWidget() && !turnstileToken) {
+      unbtn();
+      toast('Por favor, aguarde a validação de segurança.', true);
+      return;
+    }
+    payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+    withFinally(postJ('admin/products', payload), function () { unbtn(); cfReset(); }).then(function (created) {
+      var norm = normLasanhaFromProduct(created);
+      LASANHAS_DATA.push(norm);
+      toast('Lasanha duplicada! Novo ID: ' + norm.id);
+      renderLasanhas();
+    }, function (e) {
+      logErr('[lasanhas] duplicate falhou:', e);
+      if (handleAuthExpired(e)) { return; }
+      toast(safeErrMsg(e, 'Falha ao duplicar.'), true);
+      if (!orig._api) { fallbackCopy(); }
+      else { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+    });
+  }
+  if (orig._api) {
+    getJ('admin/products/' + encodeURIComponent(id)).then(doPost, function (e) {
+      logErr('[lasanhas] duplicate get falhou:', e);
+      doPost(null);
+    });
+  } else {
+    doPost(null);
+  }
 }
 
 /* =====================================================================
@@ -2448,27 +2947,88 @@ function bebidaThumb(b) {
     + '<svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" style="width:22px;height:22px"><path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z"/><path d="M6 11h12"/></svg></span>';
 }
 
+/* Bebidas seguem o mesmo modelo das Lasanhas: produto da API (cat "bebidas"). */
+var BEBIDAS_DATA = [];
+function bePrice(p) {
+  var v = p.base_price;
+  if (v === undefined || v === null || v === '') { v = p.base; }
+  if (v === undefined || v === null || v === '') { v = p.price; }
+  return parseFloat(v) || 0;
+}
+function beActive(v) {
+  return v === true || v === 1 || v === '1';
+}
+function normBebidaFromProduct(p) {
+  return {
+    id: String(p.id || ''),
+    name: String(p.name || ''),
+    price: bePrice(p),
+    active: beActive(p.active),
+    image: '',
+    position: parseInt(p.position, 10) || 0,
+    _api: true,
+    _raw: p
+  };
+}
+function normBebidaFromMock(b) {
+  return { id: String(b.id || ''), name: String(b.name || ''), price: parseFloat(b.price) || 0, active: !!b.active, image: b.image || '', position: b.position || 0, _api: false };
+}
+function findBebida(id) {
+  var r = (BEBIDAS_DATA || []).filter(function (b) { return String(b.id) === String(id); })[0];
+  if (r) return r;
+  return (MOCK_BEBIDAS_DATA || []).filter(function (b) { return String(b.id) === String(id); }).map(normBebidaFromMock)[0] || null;
+}
+function paintBebidas(rows) {
+  var toolbar =
+    '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
+      '<h3 style="font-size:1rem">Bebidas <span class="dim" style="font-weight:400">(' + rows.length + ' no cardápio)</span></h3>' +
+      '<button class="btn btn--primary btn--sm" type="button" data-new-bebida>+ Nova Bebida</button>' +
+    '</div>';
+  if (!rows.length) {
+    $('#content').innerHTML = toolbar + '<div class="empty-state"><div class="empty-state__title">Nenhuma bebida no cardápio</div><div class="empty-state__text">Clique em + Nova Bebida para cadastrar.</div></div>';
+    return;
+  }
+  var html = rows.map(function (b) {
+    var activeLabel = b.active
+      ? '<span class="badge badge--green">Ativa</span>'
+      : '<span class="badge badge--red">Inativa</span>';
+    var toggleChecked = b.active ? ' checked' : '';
+    return '<tr>' +
+      '<td>' + bebidaThumb(b) + '</td>' +
+      '<td><b>' + esc(b.name) + '</b><div class="dim" style="font-size:.72rem">' + esc(b.id) + '</div></td>' +
+      '<td class="price price--std">' + money(b.price) + '</td>' +
+      '<td>' + activeLabel + '<div style="margin-top:6px"><label class="toggle"><input type="checkbox" data-toggle-bebida="' + esc(b.id) + '"' + toggleChecked + '>' +
+        '<span class="toggle__track"><span class="toggle__circle"></span></span></label></div></td>' +
+      '<td class="tbl__actions">' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-edit-bebida="' + esc(b.id) + '">Editar</button> ' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-dup-bebida="' + esc(b.id) + '">Duplicar</button> ' +
+        '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-del-bebida="' + esc(b.id) + '">Excluir</button>' +
+      '</td></tr>';
+  }).join('');
+  $('#content').innerHTML = toolbar + tbl(['Imagem', 'Nome', 'Preço', 'Status', 'Ações'], html);
+}
+
 function renderBebidas() {
   var toolbar =
     '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
       '<h3 style="font-size:1rem">Bebidas</h3>' +
       '<button class="btn btn--primary btn--sm" type="button" data-new-bebida>+ Nova Bebida</button>' +
     '</div>';
-  var rows = MOCK_BEBIDAS_DATA.map(function (b) {
-    var activeLabel = b.active
-      ? '<span class="badge badge--green">Ativa</span>'
-      : '<span class="badge badge--red">Inativa</span>';
-    return '<tr>' +
-      '<td>' + bebidaThumb(b) + '</td>' +
-      '<td><b>' + esc(b.name) + '</b></td>' +
-      '<td class="price">' + money(b.price) + '</td>' +
-      '<td>' + activeLabel + '</td>' +
-      '<td class="tbl__actions">' +
-        '<button class="btn btn--ghost btn--sm" type="button" data-edit-bebida="' + esc(b.id) + '">Editar</button> ' +
-        '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-del-bebida="' + esc(b.id) + '">Excluir</button>' +
-      '</td></tr>';
-  }).join('');
-  $('#content').innerHTML = toolbar + tbl(['Imagem', 'Nome', 'Preço', 'Status', 'Ações'], rows);
+  $('#content').innerHTML = toolbar + '<div class="card"><p class="card__hint">Carregando bebidas do cardápio…</p></div>';
+  getJ('admin/products').then(function (prods) {
+    var rows = (prods || []).filter(function (p) {
+      var c = p.cat_id || p.cat || '';
+      return c === 'bebidas';
+    }).map(normBebidaFromProduct);
+    rows.sort(function (a, b) { return (a.position || 0) - (b.position || 0) || (a.name < b.name ? -1 : 1); });
+    BEBIDAS_DATA = rows;
+    paintBebidas(rows);
+  }, function (e) {
+    logErr('[bebidas] load falhou:', e);
+    var rows = (MOCK_BEBIDAS_DATA || []).map(normBebidaFromMock);
+    BEBIDAS_DATA = rows;
+    paintBebidas(rows);
+  });
 }
 
 function bebidaModal(bebida) {
@@ -2543,49 +3103,190 @@ function bebidaModal(bebida) {
   }
 }
 
+/* Bebida: mesmo contrato das Lasanhas (upsert_product, cat "bebidas"). */
+function bePayload(cur, name, price) {
+  var raw = (cur && cur._raw) || {};
+  return {
+    name: name,
+    cat: 'bebidas',
+    type: raw.type || 'reg',
+    base: price,
+    description: raw.description || raw.desc || '',
+    long: raw.long_desc || raw.long || '',
+    old: (raw.old_price === undefined || raw.old_price === null) ? (raw.old || null) : raw.old_price,
+    addonGroup: raw.addon_group || raw.addonGroup || '',
+    obsNote: raw.obs_note || raw.obsNote || '',
+    encomenda: !!raw.encomenda,
+    freteGratis: false,
+    badge: raw.badge || '',
+    min: 0,
+    maxPerFlavor: 0,
+    sizeLabel: raw.size_label || raw.sizeLabel || '',
+    discount: 0,
+    time: raw.time_label || raw.time || '',
+    tags: raw.tags || [],
+    position: raw.position || (cur && cur.position) || 0,
+    active: cur ? !!cur.active : true,
+    sizes: raw.sizes || [{ id: 'u', label: 'Unidade', factor: 1, price: null }],
+    ingredients: [],
+    components: [],
+    pool: []
+  };
+}
+function applyBebidaSaved(saved, isNew) {
+  var norm = normBebidaFromProduct(saved);
+  var idx = -1;
+  (BEBIDAS_DATA || []).forEach(function (b, i) { if (String(b.id) === String(norm.id)) idx = i; });
+  if (idx >= 0) { BEBIDAS_DATA[idx] = norm; }
+  else { BEBIDAS_DATA.push(norm); }
+  closeModal();
+  toast(isNew ? 'Bebida criada no cardápio!' : 'Bebida atualizada no cardápio!');
+  renderBebidas();
+}
+
 function saveBebida() {
   var name = val('be-name');
   if (!name) { toast('Informe o nome'); return; }
+  var price = parseFloat(val('be-price')) || 0;
+  if (!(price > 0)) { toast('Informe um preço válido.', true); return; }
   var idEl = document.querySelector('[data-save-bebida]');
   var id = idEl ? idEl.getAttribute('data-save-bebida') : '';
-  var cur = null;
-  if (id) {
-    MOCK_BEBIDAS_DATA.forEach(function (b) { if (b.id === id) cur = b; });
-  }
-  var data = { name: name, price: parseFloat(val('be-price')) || 0, active: cur ? !!cur.active : true };
-  if (cur && cur.image) { data.image = cur.image; }
-
-  var imgInput = document.getElementById('f-be-image');
-  var cleared = imgInput && imgInput.getAttribute('data-cleared') === '1';
-  if (cleared) { data.image = ''; }
-
-  function persist() {
-    if (id && cur) {
-      var idx = -1;
-      MOCK_BEBIDAS_DATA.forEach(function (b, i) { if (b.id === id) idx = i; });
-      if (idx >= 0) { MOCK_BEBIDAS_DATA[idx] = Object.assign({}, MOCK_BEBIDAS_DATA[idx], data); }
-    } else {
-      data.id = 'be-' + Date.now();
-      data.position = MOCK_BEBIDAS_DATA.length + 1;
-      MOCK_BEBIDAS_DATA.push(data);
-    }
-    closeModal(); toast(id ? 'Bebida atualizada!' : 'Bebida criada!'); renderBebidas();
-  }
-
-  if (imgInput && imgInput.files && imgInput.files[0]) {
-    var file = imgInput.files[0];
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast('Use JPG, PNG ou WebP.', true); return; }
-    if (file.size > 2 * 1024 * 1024) { toast('A imagem precisa ter até 2MB.', true); return; }
-    var reader = new FileReader();
-    reader.onload = function (e) { data.image = e.target.result; persist(); };
-    reader.onerror = function () { toast('Não foi possível ler a imagem.', true); };
-    reader.readAsDataURL(file);
+  var cur = id ? findBebida(id) : null;
+  var btn = idEl;
+  function setBusy(b) { if (btn) { btn.disabled = !!b; btn.textContent = b ? 'Salvando…' : (id ? 'Salvar' : 'Criar'); } }
+  var payload = hardenProductPayload(bePayload(cur, name, price));
+  if (!payload.name) { toast('Informe o nome'); return; }
+  setBusy(true);
+  // Turnstile: bloqueia sem token (widget presente), envia cf_turnstile_token no corpo.
+  const turnstileToken = cfCollectToken();
+  if (cfHasWidget() && !turnstileToken) {
+    setBusy(false);
+    toast('Por favor, aguarde a validação de segurança.', true);
     return;
   }
-  persist();
+  payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+  var req = withFinally(
+    id ? putJ('admin/products/' + encodeURIComponent(id), payload) : postJ('admin/products', payload),
+    function () { setBusy(false); cfReset(); }
+  );
+  req.then(function (saved) {
+    applyBebidaSaved(saved, !id);
+  }, function (e) {
+    logErr('[bebidas] save falhou:', e);
+    var msg = safeErrMsg(e, 'Falha ao salvar.');
+    if (e && e.status === 404 && id) {
+      setBusy(true);
+      withFinally(postJ('admin/products', payload), function () { setBusy(false); cfReset(); }).then(function (saved2) {
+        applyBebidaSaved(saved2, true);
+      }, function (e2) {
+        logErr('[bebidas] save retry falhou:', e2);
+        if (handleAuthExpired(e2)) { return; }
+        toast(msg, true);
+        if (cur && cur._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+      });
+      return;
+    }
+    if (handleAuthExpired(e)) { return; }
+    toast(msg, true);
+    if (!id || !cur || !cur._api) {
+      console.error('[bebidas] API falhou, fallback local (MOCK_BEBIDAS_DATA).');
+      var data = { id: id || ('be-' + Date.now()), name: name, price: price, active: cur ? !!cur.active : true, position: (cur && cur.position) || (MOCK_BEBIDAS_DATA || []).length + 1 };
+      var idx = -1;
+      MOCK_BEBIDAS_DATA.forEach(function (b, i) { if (String(b.id) === String(data.id)) idx = i; });
+      if (idx >= 0) { MOCK_BEBIDAS_DATA[idx] = Object.assign({}, MOCK_BEBIDAS_DATA[idx], data); }
+      else { MOCK_BEBIDAS_DATA.push(data); }
+      BEBIDAS_DATA = (MOCK_BEBIDAS_DATA || []).map(normBebidaFromMock);
+      closeModal();
+      toast(id ? 'Bebida atualizada (local, API fora do ar)!' : 'Bebida criada (local, API fora do ar)!');
+      try { renderBebidas(); } catch (err) {}
+    } else {
+      console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais.");
+    }
+  });
 }
 
-function deleteBebida(id) { if (!window.confirm('Excluir esta bebida?')) return; MOCK_BEBIDAS_DATA = MOCK_BEBIDAS_DATA.filter(function (b) { return b.id !== id; }); toast('Excluído'); renderBebidas(); }
+function deleteBebida(id, btn) {
+  var cur = findBebida(id);
+  if (!window.confirm('Excluir "' + ((cur && cur.name) || id) + '" do cardápio?')) return;
+  if (DEL_BUSY[id]) { return; }
+  DEL_BUSY[id] = true;
+  if (btn) { btn.disabled = true; }
+  function unbtn() { if (btn) { btn.disabled = false; } }
+  // Turnstile: DELETE valida o desafio (sem corpo p/ token); reset no finally.
+  const turnstileToken = cfCollectToken();
+  if (cfHasWidget() && !turnstileToken) {
+    delete DEL_BUSY[id];
+    unbtn();
+    toast('Por favor, aguarde a validação de segurança.', true);
+    return;
+  }
+  function delRelease() { delete DEL_BUSY[id]; unbtn(); cfReset(); }
+  function delBody() { return { cf_turnstile_token: turnstileToken, cf_present: cfHasWidget() }; }
+  withFinally(apiRequest('DELETE', 'admin/products/' + encodeURIComponent(id), delBody()), delRelease).then(function () {
+    BEBIDAS_DATA = (BEBIDAS_DATA || []).filter(function (b) { return String(b.id) !== String(id); });
+    toast('Bebida excluída do cardápio');
+    renderBebidas();
+  }, function (e) {
+    logErr('[bebidas] delete falhou:', e);
+    if (handleAuthExpired(e)) { return; }
+    toast(safeErrMsg(e, 'Falha ao excluir.'), true);
+    if (!cur || !cur._api) {
+      console.error('[bebidas] API falhou, fallback local (MOCK_BEBIDAS_DATA).');
+      MOCK_BEBIDAS_DATA = MOCK_BEBIDAS_DATA.filter(function (b) { return String(b.id) !== String(id); });
+      BEBIDAS_DATA = (MOCK_BEBIDAS_DATA || []).map(normBebidaFromMock);
+      toast('Excluído (local, API fora do ar)');
+      try { renderBebidas(); } catch (err) {}
+    } else {
+      console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais.");
+    }
+  });
+}
+
+function duplicateBebida(id, btn) {
+  var orig = findBebida(id);
+  if (!orig) { toast('Bebida não encontrada.', true); return; }
+  if (btn) { btn.disabled = true; }
+  function unbtn() { if (btn) { btn.disabled = false; } }
+  function doPost(full) {
+    var raw = full || orig._raw || {};
+    var maxPos = 0;
+    (BEBIDAS_DATA || []).forEach(function (b) { if ((b.position || 0) > maxPos) maxPos = b.position; });
+    var payload = hardenProductPayload(bePayload({ _raw: raw, position: maxPos + 1, active: true }, (raw.name || orig.name) + ' (Cópia)', parseFloat(raw.base_price) || orig.price || 0));
+    payload.position = Math.max(0, Math.floor(numOr(maxPos, 0))) + 1;
+    payload.active = true;
+    var dupBeBase = Number(payload.base);
+    if (!isFinite(dupBeBase) || dupBeBase <= 0) { unbtn(); toast('Informe um preço válido.', true); return; }
+    toast('Duplicando…');
+    const turnstileToken = cfCollectToken();
+    if (cfHasWidget() && !turnstileToken) {
+      unbtn();
+      toast('Por favor, aguarde a validação de segurança.', true);
+      return;
+    }
+    payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+    withFinally(postJ('admin/products', payload), function () { unbtn(); cfReset(); }).then(function (created) {
+      BEBIDAS_DATA.push(normBebidaFromProduct(created));
+      toast('Bebida duplicada! Novo ID: ' + created.id);
+      renderBebidas();
+    }, function (e) {
+      logErr('[bebidas] duplicate falhou:', e);
+      if (handleAuthExpired(e)) { return; }
+      toast(safeErrMsg(e, 'Falha ao duplicar.'), true);
+      if (orig && orig._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+    });
+  }
+  if (orig._api) {
+    getJ('admin/products/' + encodeURIComponent(id)).then(doPost, function (e) {
+      logErr('[bebidas] duplicate get falhou:', e);
+      doPost(null);
+    });
+  } else {
+    console.error('[bebidas] duplicate local (registro não-_api).');
+    doPost(null);
+  }
+}
 
 /* =====================================================================
    SECTION 21c — Sobremesas
@@ -2694,13 +3395,16 @@ function paintSobremesas(rows) {
     var activeLabel = s.active
       ? '<span class="badge badge--green">Ativa</span>'
       : '<span class="badge badge--red">Inativa</span>';
+    var toggleChecked = s.active ? ' checked' : '';
     return '<tr>' +
       '<td>' + sobremesaThumb(s) + '</td>' +
       '<td><b>' + esc(s.name) + '</b><div class="dim" style="font-size:.72rem">' + esc(s.id) + '</div></td>' +
-      '<td class="price">' + money(s.price) + '</td>' +
-      '<td>' + activeLabel + '</td>' +
+      '<td class="price price--std">' + money(s.price) + '</td>' +
+      '<td>' + activeLabel + '<div style="margin-top:6px"><label class="toggle"><input type="checkbox" data-toggle-sobremesa="' + esc(s.id) + '"' + toggleChecked + '>' +
+        '<span class="toggle__track"><span class="toggle__circle"></span></span></label></div></td>' +
       '<td class="tbl__actions">' +
         '<button class="btn btn--ghost btn--sm" type="button" data-edit-sobremesa="' + esc(s.id) + '">Editar</button> ' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-dup-sobremesa="' + esc(s.id) + '">Duplicar</button> ' +
         '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-del-sobremesa="' + esc(s.id) + '">Excluir</button>' +
       '</td></tr>';
   }).join('');
@@ -2823,6 +3527,8 @@ function saveSobremesa() {
   var id = idEl ? idEl.getAttribute('data-save-sobremesa') : '';
   var cur = id ? findSobremesa(id) : null;
   var isApi = !!(cur && cur._api);
+  var btn = idEl;
+  function setBusy(b) { if (btn) { btn.disabled = !!b; btn.textContent = b ? 'Salvando…' : (id ? 'Salvar' : 'Criar'); } }
 
   var imgInput = document.getElementById('f-so-image');
   var cleared = imgInput && imgInput.getAttribute('data-cleared') === '1';
@@ -2862,17 +3568,53 @@ function saveSobremesa() {
           pool: f.pool || []
         };
         if (payload.type !== 'reg' && payload.type !== 'kit' && payload.type !== 'selection') { payload.type = 'reg'; }
-        return putJ('admin/products/' + encodeURIComponent(id), payload);
+        payload = hardenProductPayload(payload);
+        if (!payload.name) { throw { message: 'Informe o nome', status: 400 }; }
+        if (!(payload.base > 0)) { throw { message: 'Informe um preço válido.', status: 400 }; }
+        setBusy(true);
+        // Turnstile: bloqueia sem token (widget presente); token segue no corpo.
+        const turnstileToken = cfCollectToken();
+        if (cfHasWidget() && !turnstileToken) {
+          setBusy(false);
+          throw { message: 'Por favor, aguarde a validação de segurança.', status: 429 };
+        }
+        payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+        return withFinally(putJ('admin/products/' + encodeURIComponent(id), payload),
+          function () { setBusy(false); cfReset(); });
       }).then(function () {
+        setBusy(false);
         closeModal(); toast('Sobremesa atualizada no cardápio!'); renderSobremesas();
-      }, function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
+      }, function (e) {
+        setBusy(false);
+        logErr('[sobremesas] save falhou:', e);
+        if (handleAuthExpired(e)) { return; }
+        toast(safeErrMsg(e, 'Falha ao salvar.'), true);
+        if (cur && cur._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+      });
       return;
     }
     if (!id) {
-      postJ('admin/products', { name: name, cat: 'sobremesas', type: 'reg', base: price, active: true, addonGroup: 'doce' }).then(function (created) {
+      setBusy(true);
+      // Turnstile: bloqueia sem token (widget presente); token segue no corpo.
+      const turnstileToken = cfCollectToken();
+      if (cfHasWidget() && !turnstileToken) {
+        setBusy(false);
+        toast('Por favor, aguarde a validação de segurança.', true);
+        return;
+      }
+      var createPayload = hardenProductPayload({ name: name, cat: 'sobremesas', type: 'reg', base: price, active: true, addonGroup: 'doce' });
+      createPayload.cf_turnstile_token = turnstileToken;
+      createPayload.cf_present = cfHasWidget();
+      withFinally(postJ('admin/products', createPayload), function () { setBusy(false); cfReset(); }).then(function (created) {
         if (next && created && created.id) { soImgSet(created.id, next); }
         closeModal(); toast('Sobremesa criada no cardápio!'); renderSobremesas();
-      }, function (e) { toast((e && e.message) || 'Falha ao criar.', true); });
+      }, function (e) {
+        setBusy(false);
+        logErr('[sobremesas] create falhou:', e);
+        if (handleAuthExpired(e)) { return; }
+        toast(safeErrMsg(e, 'Falha ao criar.'), true);
+      });
       return;
     }
     var data = { name: name, price: price, active: cur ? !!cur.active : true };
@@ -2889,34 +3631,228 @@ function saveSobremesa() {
     closeModal(); toast('Sobremesa atualizada!'); renderSobremesas();
   }
 
+  // Trava imediata: cobre também a leitura assíncrona do FileReader abaixo.
+  setBusy(true);
   if (imgInput && imgInput.files && imgInput.files[0]) {
     var file = imgInput.files[0];
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast('Use JPG, PNG ou WebP.', true); return; }
-    if (file.size > 2 * 1024 * 1024) { toast('A imagem precisa ter até 2MB.', true); return; }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { setBusy(false); toast('Use JPG, PNG ou WebP.', true); return; }
+    if (file.size > 2 * 1024 * 1024) { setBusy(false); toast('A imagem precisa ter até 2MB.', true); return; }
     var reader = new FileReader();
     reader.onload = function (e) { finishImage(e.target.result); };
-    reader.onerror = function () { toast('Não foi possível ler a imagem.', true); };
+    reader.onerror = function () { setBusy(false); toast('Não foi possível ler a imagem.', true); };
     reader.readAsDataURL(file);
     return;
   }
+  setBusy(false);
   finishImage(null);
 }
 
-function deleteSobremesa(id) {
-  if (!window.confirm('Excluir esta sobremesa?')) return;
+function deleteSobremesa(id, btn) {
   var cur = findSobremesa(id);
+  if (!window.confirm('Excluir "' + ((cur && cur.name) || id) + '" do cardápio?')) return;
   if (cur && cur._api) {
-    delJ('admin/products/' + encodeURIComponent(id)).then(function () {
+    if (DEL_BUSY[id]) { return; }
+    DEL_BUSY[id] = true;
+    if (btn) { btn.disabled = true; }
+    function unbtn() { if (btn) { btn.disabled = false; } }
+    // Turnstile: DELETE valida o desafio (sem corpo p/ token); reset no finally.
+    const turnstileToken = cfCollectToken();
+    if (cfHasWidget() && !turnstileToken) {
+      delete DEL_BUSY[id];
+      unbtn();
+      toast('Por favor, aguarde a validação de segurança.', true);
+      return;
+    }
+    function delRelease() { delete DEL_BUSY[id]; unbtn(); cfReset(); }
+    function delBody() { return { cf_turnstile_token: turnstileToken, cf_present: cfHasWidget() }; }
+    withFinally(apiRequest('DELETE', 'admin/products/' + encodeURIComponent(id), delBody()), delRelease).then(function () {
       soImgSet(id, '');
+      S_SOBREMESAS.rows = (S_SOBREMESAS.rows || []).filter(function (s) { return String(s.id) !== String(id); });
       toast('Sobremesa excluída do cardápio'); renderSobremesas();
-    }, function (e) { toast((e && e.message) || 'Falha ao excluir.', true); });
+    }, function (e) {
+      logErr('[sobremesas] delete falhou:', e);
+      if (handleAuthExpired(e)) { return; }
+      toast(safeErrMsg(e, 'Falha ao excluir.'), true);
+      console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais.");
+    });
     return;
   }
+  console.error('[sobremesas] API fora do ar ou registro local, fallback em memória.');
   MOCK_SOBREMESAS_DATA = MOCK_SOBREMESAS_DATA.filter(function (s) { return String(s.id) !== String(id); });
   soSetCustoms(soGetCustoms().filter(function (s) { return String(s.id) !== String(id); }));
   soAddDeleted(id);
   soImgSet(id, '');
   toast('Excluído'); renderSobremesas();
+}
+
+function duplicateSobremesa(id, btn) {
+  var orig = findSobremesa(id);
+  if (!orig) { toast('Sobremesa não encontrada.', true); return; }
+  if (btn) { btn.disabled = true; }
+  function unbtn() { if (btn) { btn.disabled = false; } }
+  function doPost(full) {
+    var raw = full || orig._raw || {};
+    var maxPos = 0;
+    (S_SOBREMESAS.rows || []).forEach(function (s) { if ((s.position || 0) > maxPos) maxPos = s.position; });
+    var price = parseFloat(raw.base_price) || orig.price || 0;
+    if (!(price > 0)) { toast('Informe um preço válido.', true); return; }
+    var payload = {
+      name: (raw.name || orig.name) + ' (Cópia)',
+      cat: 'sobremesas',
+      type: raw.type || 'reg',
+      base: price,
+      description: raw.description || '',
+      long: raw.long_desc || raw.long || '',
+      old: (raw.old_price === undefined || raw.old_price === null) ? (raw.old || null) : raw.old_price,
+      addonGroup: raw.addon_group || raw.addonGroup || 'doce',
+      obsNote: raw.obs_note || raw.obsNote || '',
+      encomenda: !!raw.encomenda,
+      freteGratis: false,
+      badge: raw.badge || '',
+      min: 0,
+      maxPerFlavor: 0,
+      sizeLabel: raw.size_label || raw.sizeLabel || '',
+      discount: 0,
+      time: raw.time_label || raw.time || '',
+      tags: raw.tags || [],
+      position: maxPos + 1,
+      active: true,
+      sizes: raw.sizes || [{ id: 'u', label: 'Unidade', factor: 1, price: null }],
+      ingredients: raw.ingredients || [],
+      components: raw.components || [],
+      pool: []
+    };
+    payload = hardenProductPayload(payload);
+    var dupSoBase = Number(payload.base);
+    var dupSoPos = Number(payload.position);
+    if (!isFinite(dupSoBase) || dupSoBase <= 0) { unbtn(); toast('Informe um preço válido.', true); return; }
+    if (!isFinite(dupSoPos)) { unbtn(); toast('Posição inválida — recarregue e tente de novo.', true); return; }
+    toast('Duplicando…');
+    const turnstileToken = cfCollectToken();
+    if (cfHasWidget() && !turnstileToken) {
+      unbtn();
+      toast('Por favor, aguarde a validação de segurança.', true);
+      return;
+    }
+    payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+    withFinally(postJ('admin/products', payload), function () { unbtn(); cfReset(); }).then(function (created) {
+      toast('Sobremesa duplicada! Novo ID: ' + created.id);
+      renderSobremesas();
+    }, function (e) {
+      logErr('[sobremesas] duplicate falhou:', e);
+      if (handleAuthExpired(e)) { return; }
+      toast(safeErrMsg(e, 'Falha ao duplicar.'), true);
+      if (orig && orig._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+    });
+  }
+  if (orig._api) {
+    getJ('admin/products/' + encodeURIComponent(id)).then(doPost, function (e) {
+      logErr('[sobremesas] duplicate get falhou:', e);
+      doPost(null);
+    });
+  } else {
+    console.error('[sobremesas] duplicate local (registro não-_api).');
+    doPost(null);
+  }
+}
+
+/* Ocultar/Exibir item (campo active), idêntico p/ Lasanhas, Sobremesas e Bebidas:
+   PUT admin/products/:id com o payload completo preservado + active alternado. */
+function fullToActivePayload(full, next) {
+  return {
+    name: full.name,
+    cat: full.cat_id || full.cat,
+    type: full.type || 'reg',
+    base: parseFloat(full.base_price) || 0,
+    description: full.description || '',
+    long: full.long_desc || full.long || '',
+    old: (full.old_price === undefined || full.old_price === null) ? (full.old || null) : full.old_price,
+    addonGroup: full.addon_group || full.addonGroup || '',
+    obsNote: full.obs_note || full.obsNote || '',
+    encomenda: !!full.encomenda,
+    freteGratis: !!full.frete_gratis || !!full.freteGratis,
+    badge: full.badge || '',
+    min: full.min_units || full.min || 0,
+    maxPerFlavor: full.max_per_flavor || full.maxPerFlavor || 0,
+    sizeLabel: full.size_label || full.sizeLabel || '',
+    discount: full.discount || 0,
+    time: full.time_label || full.time || '',
+    tags: full.tags || [],
+    position: full.position || 0,
+    active: !!next,
+    sizes: full.sizes || [],
+    ingredients: full.ingredients || [],
+    components: full.components || [],
+    pool: full.pool || []
+  };
+}
+function syncLocalActive(kind, id, next) {
+  if (kind === 'lasanha') {
+    (LASANHAS_DATA || []).forEach(function (l) { if (String(l.id) === String(id)) l.active = next; });
+  } else if (kind === 'sobremesa') {
+    (S_SOBREMESAS.rows || []).forEach(function (s) { if (String(s.id) === String(id)) s.active = next; });
+  } else {
+    (BEBIDAS_DATA || []).forEach(function (b) { if (String(b.id) === String(id)) b.active = next; });
+  }
+}
+function paintKind(kind) {
+  if (kind === 'lasanha') { try { renderLasanhas(); } catch (e) {} }
+  else if (kind === 'sobremesa') { try { renderSobremesas(); } catch (e) {} }
+  else { try { renderBebidas(); } catch (e) {} }
+}
+function toggleProductActive(kind, id, box) {
+  var finders = { lasanha: findLasanha, sobremesa: findSobremesa, bebida: findBebida };
+  var cur = finders[kind](id);
+  if (!cur) { toast('Item não encontrado.', true); return; }
+  var next = !cur.active;
+  var prev = !!cur.active;
+  if (TOGGLE_BUSY[id]) { return; } // ignora cliques no mesmo item até terminar
+  TOGGLE_BUSY[id] = true;
+  if (box) { box.disabled = true; } // evita clique duplo durante o PUT
+  function revert() {
+    if (box) { box.disabled = false; box.checked = prev; }
+  }
+  function unlock() { delete TOGGLE_BUSY[id]; if (box) { box.disabled = false; } cfReset(); }
+  // Turnstile: o PUT é mutação — valida o desafio antes do GET/PUT.
+  const turnstileToken = cfCollectToken();
+  if (cfHasWidget() && !turnstileToken) {
+    unlock();
+    toast('Por favor, aguarde a validação de segurança.', true);
+    return;
+  }
+  if (!cur._api) {
+    console.error('[' + kind + '] API fora do ar ou registro local, fallback em memória.');
+    syncLocalActive(kind, id, next);
+    paintKind(kind);
+    unlock();
+    toast(next ? 'Item exibido (local)!' : 'Item ocultado (local)!');
+    return;
+  }
+  getJ('admin/products/' + encodeURIComponent(id)).then(function (full) {
+    var payload = hardenProductPayload(fullToActivePayload(full || cur._raw || {}, next));
+    if (!(payload.base > 0)) { revert(); unlock(); toast('Item sem preço base — abra Editar e informe o preço.', true); return; }
+    payload.cf_turnstile_token = turnstileToken;
+  payload.cf_present = cfHasWidget();
+    withFinally(putJ('admin/products/' + encodeURIComponent(id), payload), unlock).then(function () {
+      syncLocalActive(kind, id, next);
+      paintKind(kind);
+      toast(next ? 'Item exibido com sucesso!' : 'Item ocultado com sucesso!');
+    }, function (e) {
+      logErr('[' + kind + '] toggle active falhou:', e);
+      revert();
+      if (handleAuthExpired(e)) { return; }
+      toast(safeErrMsg(e, 'Falha ao alternar visibilidade.'), true);
+      if (cur && cur._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+    });
+  }, function (e) {
+    unlock();
+    logErr('[' + kind + '] toggle get falhou:', e);
+    revert();
+    if (handleAuthExpired(e)) { return; }
+    toast(safeErrMsg(e, 'Falha ao alternar visibilidade.'), true);
+    if (cur && cur._api) { console.error("Falha na requisição da API de produção. Fallback local ignorado para dados reais."); }
+  });
 }
 
 /* =====================================================================
@@ -2976,15 +3912,17 @@ function contentClick(e) {
   if (lfs) { S_LASANHAS.size = lfs.getAttribute('data-lfilter-size'); renderLasanhas(); return; }
   var lfa = t.closest('[data-lfilter-active]');
   if (lfa) { S_LASANHAS.active = lfa.getAttribute('data-lfilter-active'); renderLasanhas(); return; }
+  var lfc = t.closest('[data-lfilter-cat]');
+  if (lfc) { S_LASANHAS.cat = lfc.getAttribute('data-lfilter-cat'); renderLasanhas(); return; }
 
   var el = t.closest('[data-edit-lasanha]');
-  if (el) { var f = MOCK_LASANHAS.filter(function (l) { return l.id === el.getAttribute('data-edit-lasanha'); })[0]; if (f) lasanhaModal(f); return; }
+  if (el) { var f = findLasanha(el.getAttribute('data-edit-lasanha')); if (f) lasanhaModal(f); return; }
   el = t.closest('[data-del-lasanha]');
-  if (el) { deleteLasanha(el.getAttribute('data-del-lasanha')); return; }
+  if (el) { deleteLasanha(el.getAttribute('data-del-lasanha'), el); return; }
   el = t.closest('[data-dup-lasanha]');
-  if (el) { duplicateLasanha(el.getAttribute('data-dup-lasanha')); return; }
+  if (el) { duplicateLasanha(el.getAttribute('data-dup-lasanha'), el); return; }
   el = t.closest('[data-toggle-lasanha]');
-  if (el) { var tid = el.getAttribute('data-toggle-lasanha'); MOCK_LASANHAS.forEach(function (l) { if (l.id === tid) l.active = !l.active; }); toast('Status atualizado'); return; }
+  if (el) { toggleProductActive('lasanha', el.getAttribute('data-toggle-lasanha'), el); return; }
   el = t.closest('[data-toggle-adicional]');
   if (el) {
     var aid2 = el.getAttribute('data-toggle-adicional');
@@ -3011,15 +3949,23 @@ function contentClick(e) {
 
   if (t.closest('[data-new-bebida]')) { bebidaModal(null); return; }
   el = t.closest('[data-edit-bebida]');
-  if (el) { var fb = MOCK_BEBIDAS_DATA.filter(function (b) { return b.id === el.getAttribute('data-edit-bebida'); })[0]; if (fb) bebidaModal(fb); return; }
+  if (el) { var fb = findBebida(el.getAttribute('data-edit-bebida')); if (fb) bebidaModal(fb); return; }
+  el = t.closest('[data-dup-bebida]');
+  if (el) { duplicateBebida(el.getAttribute('data-dup-bebida'), el); return; }
   el = t.closest('[data-del-bebida]');
-  if (el) { deleteBebida(el.getAttribute('data-del-bebida')); return; }
+  if (el) { deleteBebida(el.getAttribute('data-del-bebida'), el); return; }
+  el = t.closest('[data-toggle-bebida]');
+  if (el) { toggleProductActive('bebida', el.getAttribute('data-toggle-bebida'), el); return; }
 
   if (t.closest('[data-new-sobremesa]')) { sobremesaModal(null); return; }
   el = t.closest('[data-edit-sobremesa]');
   if (el) { var fs = findSobremesa(el.getAttribute('data-edit-sobremesa')); if (fs) sobremesaModal(fs); return; }
+  el = t.closest('[data-dup-sobremesa]');
+  if (el) { duplicateSobremesa(el.getAttribute('data-dup-sobremesa'), el); return; }
   el = t.closest('[data-del-sobremesa]');
-  if (el) { deleteSobremesa(el.getAttribute('data-del-sobremesa')); return; }
+  if (el) { deleteSobremesa(el.getAttribute('data-del-sobremesa'), el); return; }
+  el = t.closest('[data-toggle-sobremesa]');
+  if (el) { toggleProductActive('sobremesa', el.getAttribute('data-toggle-sobremesa'), el); return; }
 
   /* --- Financial --- */
   if (t.closest('[data-ingfilter-cat]')) { S_ING.cat = t.closest('[data-ingfilter-cat]').getAttribute('data-ingfilter-cat'); renderIngredientes(); return; }
@@ -3299,10 +4245,8 @@ function printOrderDoc(o) {
 
 /* ---------- Insumos ---------- */
 var ING_CATS = [
-  { id: 'massas', l: 'Massas' },
   { id: 'massa-fresca', l: 'Massa Fresca' },
-  { id: 'molhos', l: 'Molhos' },
-  { id: 'molho', l: 'Molho' },
+  { id: 'molhos', l: 'Molhos Caseiros' },
   { id: 'geral',  l: 'Geral' }
 ];
 var S_ING = { cat: '' };
@@ -3427,34 +4371,60 @@ function saveFicha(el) {
     tempo_total_min: fhv('fh-tt'), tempo_montagem_min: fhv('fh-tm'),
     embalagem_cost: fhv('fh-emb'), desperdicio_pct: fhv('fh-desp'), margem_desejada: fhv('fh-margem'),
     alergenicos: fhv('fh-alerg'), armazenamento: fhv('fh-armaz'), contaminacao: fhv('fh-contam'),
-    foto_url: fhv('fh-foto'), aprovado_por: fhv('fh-aprov'), modo_preparo: fhv('fh-modo')
+    foto_url: fhv('fh-foto'), aprovado_por: fhv('fh-aprov'), modo_preparo: fhv('fh-modo'),
+    modo_de_uso: fhv('fh-uso'), volume_ml: fhv('fh-vol'),
+    rendimento_em_l: fhv('fh-rendl'), tempo_gratinado: fhv('fh-grat')
   };
   /* Salvar vazia APAGA a ficha no servidor: pede confirmação explícita. */
   if (!items.length && !window.confirm('Salvar a ficha vazia? Isto apaga todos os insumos deste produto.')) { return; }
+  /* Campos obrigatórios por tipo: bloqueia com erro inline (nunca silencioso). */
+  var missing = [];
+  fichaRequiredFields(S_FH_CAT).forEach(function (r) {
+    var inp = document.getElementById(r.id);
+    if (!inp || String(inp.value || '').trim() === '') { missing.push(r); }
+  });
+  if (missing.length) {
+    fichaShowErr('Ficha incompleta — preencha: ' + missing.map(function (r) { return r.label; }).join(', ') + '.',
+      missing.map(function (r) { return r.id; }));
+    return;
+  }
   putJ('admin/ficha-full/' + encodeURIComponent(pid), { header: header, items: items }).then(function () {
     S_FICHA.status[pid] = items.length > 0;
     closeModal(); toast('Ficha técnica salva!'); renderFichaTecnica();
   }, function (e) {
+    if (e && e.errors && e.errors.missing && e.errors.missing.length) {
+      fichaShowErr(e.error || 'Ficha incompleta.', e.errors.fields || []);
+      return;
+    }
     if (e && e.status === 404 && /coluna|coluna|tabela|Table|Unknown column/i.test(e.message || '')) {
       toast('Atualize o backend (sql/16) para a ficha completa.', true);
       return;
     }
-    /* Backend sem a rota nova: cai na ficha legada (sem cabeçalho). */
+    /* Backend sem a rota nova: cai na ficha legada (sem cabeçalho), com aviso. */
     if (e && e.status === 404) {
+      console.warn('ficha-full indisponível — salvando na ficha legada:', e && (e.message || e.status));
       postJ('admin/ficha/' + pid, { items: items.map(function (it) {
         return { ingredient_id: it.ingredient_id, qty: it.qtd_liquida * it.fator_correcao, unit: it.unidade };
-      }) }).then(function () { closeModal(); toast('Ficha técnica salva!'); renderFichaTecnica(); })
+      }) }).then(function () { closeModal(); toast('Ficha salva em modo legado (sem cabeçalho).', true); renderFichaTecnica(); })
       .catch(function (e2) { toast(e2.message, true); });
       return;
     }
-    toast((e && e.message) || 'Falha ao salvar.', true);
+    var msg = (e && e.message) || 'Falha ao salvar.';
+    /* Erro de SQL (ex.: #1146 tabela ausente): aponta a correção em vez do genérico. */
+    if (/1146|42S02|doesn't exist/i.test(msg)) {
+      fichaShowErr('Banco sem a tabela da ficha técnica — rode sql/16-ficha-tecnica-full.sql (depois 19 e 20) no phpMyAdmin. Detalhe: ' + msg, []);
+      return;
+    }
+    fichaShowErr(msg, []);
   });
 }
 
 function printFicha(productId) {
   getJ('admin/ficha-full/' + encodeURIComponent(productId)).then(function (d) {
     printFichaDoc(productId, d || {});
-  }, function () {
+  }, function (e) {
+    console.warn('ficha-full indisponível — imprimindo ficha legada:', e && (e.message || e.status || e));
+    toast('Ficha completa indisponível — impressão em modo legado.', true);
     getJ('admin/ficha/' + encodeURIComponent(productId)).then(function (d2) {
       printFichaDoc(productId, d2 || {});
     }, appAlert);
@@ -3709,11 +4679,60 @@ function fichaNewModal() {
 }
 
 var S_FH_PRICE = 0;
+var S_FH_CAT = '';
+
+/* Tipo da ficha pela categoria do produto: massa-fresca → massa,
+   molhos-caseiros → molho, categorias de lasanha → lasanha, resto → ''
+   (sem campos obrigatórios extras). Espelha ficha_type_for() no PHP. */
+function fichaTypeFor(pid, catId) {
+  var c = String(catId || '').toLowerCase();
+  if (!c) {
+    var p = (S_FICHA.prods || []).filter(function (x) { return x.id === pid; })[0];
+    c = String((p && (p.cat_id || p.cat)) || '').toLowerCase();
+  }
+  if (c === 'massa-fresca') { return 'massa'; }
+  if (c === 'molhos-caseiros') { return 'molho'; }
+  if (['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar'].indexOf(c) !== -1) { return 'lasanha'; }
+  return '';
+}
+
+/* Campos obrigatórios por tipo (id do input no modal + rótulo). */
+function fichaRequiredFields(t) {
+  if (t === 'massa') {
+    return [{ id: 'f-fh-peso', label: 'Peso (g)' }, { id: 'f-fh-valref', label: 'Validade refrigerada' }, { id: 'f-fh-uso', label: 'Modo de uso' }];
+  }
+  if (t === 'molho') {
+    return [{ id: 'f-fh-vol', label: 'Volume (mL)' }, { id: 'f-fh-valref', label: 'Validade refrigerada' }, { id: 'f-fh-rendl', label: 'Rendimento (L)' }];
+  }
+  if (t === 'lasanha') {
+    return [{ id: 'f-fh-peso', label: 'Peso (g)' }, { id: 'f-fh-rend', label: 'Rendimento' }, { id: 'f-fh-grat', label: 'Tempo de gratinado (min)' }];
+  }
+  return [];
+}
+
+/* Erro inline no modal da ficha + destaque nos campos informados. */
+function fichaShowErr(msg, fieldIds) {
+  var box = document.getElementById('fh-err');
+  if (box) {
+    box.innerHTML = msg ? '<p class="badge badge--red" style="display:block;padding:8px 12px;margin-bottom:8px">' + esc(msg) + '</p>' : '';
+  }
+  $$('#modal .field__input.is-invalid').forEach(function (el) { el.classList.remove('is-invalid'); });
+  (fieldIds || []).forEach(function (id) {
+    var inp = document.getElementById(id);
+    if (inp) { inp.classList.add('is-invalid'); }
+  });
+}
 
 function openFichaEditor(productId) {
   Promise.all([
     getJ('admin/ficha-full/' + encodeURIComponent(productId)).then(function (d) { d._full = true; return d; },
-      function () { return getJ('admin/ficha/' + productId); }),
+      function (e) {
+        console.warn('ficha-full indisponível — usando ficha legada:', e && (e.message || e.status || e));
+        return getJ('admin/ficha/' + productId).then(function (d) {
+          d._legacyReason = (e && e.message) || ('HTTP ' + (e && e.status));
+          return d;
+        });
+      }),
     getJ('admin/ingredients')
   ]).then(function (res) {
     var data = res[0] || {};
@@ -3726,6 +4745,8 @@ function openFichaEditor(productId) {
       : (data || {});
     S_FH_PRICE = parseFloat(calc.price) || 0;
     var H = header || {};
+    var ftype = fichaTypeFor(productId, data.cat_id);
+    S_FH_CAT = ftype;
 
     function hv(k, dflt) {
       var v = H[k];
@@ -3757,9 +4778,14 @@ function openFichaEditor(productId) {
       field('fh-contam', 'Contaminação cruzada', hv('contaminacao', '')) +
       field('fh-foto', 'Foto padrão (URL)', hv('foto_url', '')) +
       field('fh-aprov', 'Aprovado por', hv('aprovado_por', '')) +
+      (ftype === 'lasanha' ? field('fh-grat', 'Tempo de gratinado (min)', hv('tempo_gratinado'), { type: 'number' }) : '') +
+      (ftype === 'molho' ? field('fh-vol', 'Volume (mL)', hv('volume_ml'), { type: 'number' }) +
+        field('fh-rendl', 'Rendimento (L)', hv('rendimento_em_l'), { type: 'number' }) : '') +
     '</div>' +
     '<div class="field" style="margin-top:10px"><label class="field__label" for="f-fh-modo">Modo de preparo</label>' +
-    '<textarea class="field__input" id="f-fh-modo" rows="3" placeholder="1. ...&#10;2. ...">' + esc(hv('modo_preparo')) + '</textarea></div></div>';
+    '<textarea class="field__input" id="f-fh-modo" rows="3" placeholder="1. ...&#10;2. ...">' + esc(hv('modo_preparo')) + '</textarea></div>' +
+    (ftype === 'massa' ? '<div class="field" style="margin-top:10px"><label class="field__label" for="f-fh-uso">Modo de uso</label>' +
+    '<textarea class="field__input" id="f-fh-uso" rows="3" placeholder="Como usar a massa (cozinhar, abrir, cortar)…">' + esc(hv('modo_de_uso')) + '</textarea></div>' : '') + '</div>';
 
     h += '<div class="card" style="margin-bottom:12px"><div class="field__label" style="margin-bottom:8px">Ingredientes (qtd. líquida × fator de correção = qtd. bruta)</div>';
     h += '<div id="ficha-items">';
@@ -3770,11 +4796,15 @@ function openFichaEditor(productId) {
     h += '<button class="btn btn--ghost btn--sm" data-add-ficha-row style="margin-top:10px">+ Adicionar insumo</button>';
     h += '<div id="fh-totals" style="margin-top:12px;font-size:.85rem">' + fhTotalsHtml(calc) + '</div></div>';
 
-    h += '<div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">' +
+    h += '<div id="fh-err"></div>' +
+      '<div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">' +
       '<button class="btn btn--ghost" type="button" data-close-modal>Cancelar</button>' +
       '<button class="btn btn--ghost" type="button" data-print-ficha="' + esc(productId) + '">🖨 Imprimir</button>' +
       '<button class="btn btn--primary" type="button" data-save-ficha="' + esc(productId) + '">Salvar Ficha</button></div>';
     openModal('Ficha Técnica — ' + esc(productId), h, true);
+    if (!isFull) {
+      $('#fh-err').innerHTML = '<p class="badge badge--amber">⚠ Ficha completa indisponível (' + esc(data._legacyReason || 'erro desconhecido') + ') — modo legado: salvar sem cabeçalho. Rode sql/16-ficha-tecnica-full.sql no phpMyAdmin.</p>';
+    }
     recalcFichaModal();
   }, appAlert);
 }
