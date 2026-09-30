@@ -52,6 +52,42 @@ function api_public_register(Router $r): void
         ok($u);
     });
 
+    $r->post('/auth/verify-2fa', function () {
+        $d = body();
+        $u = verify_totp_login((string)pick($d, 'code', ''));
+        if (!$u) {
+            err('Código inválido ou expirado.', 401);
+        }
+        ok($u);
+    });
+
+    /* Consentimento LGPD da vitrine (sem IP: só identificador + escolha + versão). */
+    $r->post('/lgpd/consent', function () {
+        $d = body();
+        $subject = strtolower(trim((string)pick($d, 'subject', '')));
+        $choice = strtolower(trim((string)pick($d, 'choice', '')));
+        $version = trim((string)pick($d, 'version', 'v1'));
+        if ($subject === '' || mb_strlen($subject) > 190) {
+            err('Identificador inválido.', 400);
+        }
+        if (!in_array($choice, ['accepted', 'refused'], true)) {
+            err('Escolha inválida.', 400);
+        }
+        if (!preg_match('/^[a-z0-9.\-_]{1,20}$/i', $version)) {
+            $version = 'v1';
+        }
+        try {
+            $st = db()->prepare(
+                'INSERT INTO lgpd_consents (subject, choice, version) VALUES (?, ?, ?)'
+                . ' ON DUPLICATE KEY UPDATE choice = VALUES(choice), created_at = CURRENT_TIMESTAMP'
+            );
+            $st->execute([$subject, $choice, $version]);
+        } catch (Throwable $e) {
+            err('Tabela lgpd_consents ausente: importe sql/23-lgpd.sql.', 500);
+        }
+        ok(true);
+    });
+
     $r->post('/auth/logout', function () {
         logout_lp();
         // Logout via form do painel: navegação top-level (Accept html) recebe

@@ -32,6 +32,15 @@ function current_user(): ?array
     $st = db()->prepare('SELECT id, name, email, role, avatar FROM users WHERE id = ? AND active = 1');
     $st->execute([(int)$_SESSION['uid']]);
     $u = $st->fetch();
+    if ($u && auth_totp_cols()) {
+        try {
+            $t = db()->prepare('SELECT totp_enabled FROM users WHERE id = ?');
+            $t->execute([(int)$u['id']]);
+            $u['totp_enabled'] = (int)($t->fetchColumn() ?: 0);
+        } catch (Throwable $e) {
+            $u['totp_enabled'] = 0;
+        }
+    }
     $cache = $u ?: null;
     if ($cache === null) {
         unset($_SESSION['uid']);
@@ -59,7 +68,31 @@ function require_admin(): array
     return $u;
 }
 
-/** Valida credenciais e abre sessão. Retorna o usuário ou null. */
+/** Colunas 2FA podem não existir (migration 22 pendente): detecta uma vez. */
+function auth_totp_cols(): bool
+{
+    static $has = null;
+    if ($has === null) {
+        try {
+            $has = db()->query("SHOW COLUMNS FROM users LIKE 'totp_enabled'")->fetch() ? true : false;
+        } catch (Throwable $e) {
+            $has = false;
+        }
+    }
+    return $has;
+}
+
+/** Formato público do usuário logado (sem segredos). */
+function auth_public_user(array $u): array
+{
+    return [
+        'id' => (int)$u['id'], 'name' => $u['name'], 'email' => $u['email'],
+        'role' => $u['role'], 'avatar' => $u['avatar'] ?? null,
+        'totp_enabled' => auth_totp_cols() ? (int)($u['totp_enabled'] ?? 0) : 0,
+    ];
+}
+
+/** Valida credenciais. Com 2FA ativo, NÃO abre sessão: retorna need2fa. */
 function try_login(string $email, string $pass): ?array
 {
     $st = db()->prepare('SELECT * FROM users WHERE email = ? AND active = 1');
@@ -68,10 +101,60 @@ function try_login(string $email, string $pass): ?array
     if (!$u || !password_verify($pass, $u['password_hash'])) {
         return null;
     }
+    if (auth_totp_cols() && (int)($u['totp_enabled'] ?? 0) === 1 && !empty($u['totp_secret'])) {
+        start_session_lp();
+        session_regenerate_id(true);
+        $_SESSION['totp_pending'] = ['uid' => (int)$u['id'], 'at' => time()];
+        unset($_SESSION['uid']);
+        return ['need2fa' => true];
+    }
     start_session_lp();
     session_regenerate_id(true);
     $_SESSION['uid'] = (int)$u['id'];
-    return ['id' => (int)$u['id'], 'name' => $u['name'], 'email' => $u['email'], 'role' => $u['role'], 'avatar' => $u['avatar'] ?? null];
+    return auth_public_user($u);
+}
+
+/** Segunda etapa: código TOTP (6 dígitos) ou código de recuperação (uso único). */
+function verify_totp_login(string $code): ?array
+{
+    start_session_lp();
+    $p = $_SESSION['totp_pending'] ?? null;
+    if (!is_array($p) || (time() - (int)($p['at'] ?? 0)) > 600) {
+        unset($_SESSION['totp_pending']);
+        return null;
+    }
+    $st = db()->prepare('SELECT * FROM users WHERE id = ? AND active = 1');
+    $st->execute([(int)$p['uid']]);
+    $u = $st->fetch();
+    if (!$u) {
+        unset($_SESSION['totp_pending']);
+        return null;
+    }
+    $code = trim($code);
+    $ok = auth_totp_cols() && totp_verify((string)($u['totp_secret'] ?? ''), $code);
+    if (!$ok) {
+        // Tenta código de recuperação (consome em caso de acerto).
+        $rec = json_decode((string)($u['totp_recovery'] ?? '[]'), true);
+        if (is_array($rec)) {
+            foreach ($rec as $i => $h) {
+                if (is_string($h) && password_verify(strtoupper(preg_replace('/\s+/', '', $code)), $h)) {
+                    unset($rec[$i]);
+                    db()->prepare('UPDATE users SET totp_recovery = ? WHERE id = ?')
+                        ->execute([json_encode(array_values($rec)), (int)$u['id']]);
+                    $ok = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (!$ok) {
+        sleep(1); // freio anti-força-bruta
+        return null;
+    }
+    unset($_SESSION['totp_pending']);
+    session_regenerate_id(true);
+    $_SESSION['uid'] = (int)$u['id'];
+    return auth_public_user($u);
 }
 
 function logout_lp(): void

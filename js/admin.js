@@ -2079,9 +2079,10 @@ var CFG_SPEC = [
   { id: 'cfg-delivery',     k: 'delivery_active', t: 'bool' },
   { id: 'cfg-pickup',       k: 'pickup_active',   t: 'bool' },
   { id: 'cfg-min-delivery', k: 'min_delivery',    t: 'text' },
-  { id: 'cfg-notif-sound',  k: 'notif_sound',     t: 'bool' },
-  { id: 'cfg-notif-email',  k: 'notif_email',     t: 'bool' },
-  { id: 'cfg-notif-whats',  k: 'notif_whats',     t: 'bool' }
+  { id: 'cfg-notif-sound',  k: 'notif_sound',      t: 'bool' },
+  { id: 'cfg-notif-email',  k: 'notif_email',      t: 'bool' },
+  { id: 'cfg-notif-whats',  k: 'notif_whats',      t: 'bool' },
+  { id: 'cfg-lgpd-retention', k: 'lgpd_retention_months', t: 'text' }
 ];
 
 function cfgIsOn(v) {
@@ -2142,6 +2143,17 @@ function renderConfig() {
       toggleHtml('cfg-notif-sound', 'Som de novos pedidos', true) +
       toggleHtml('cfg-notif-email', 'E-mail de novos pedidos', false) +
       toggleHtml('cfg-notif-whats', 'WhatsApp de novos pedidos', false) +
+    '</div></div>' +
+    '<div class="config-section"><h3 class="config-section__title">Privacidade (LGPD)</h3><div class="card">' +
+      field('cfg-lgpd-retention', 'Retenção de dados (meses)', '12', { type: 'number', minor: 'Pedidos mais antigos são anonimizados' }) +
+      '<div class="form-grid" style="margin-top:12px">' +
+        field('lgpd-email', 'E-mail do cliente', '', { placeholder: 'cliente@email.com' }) +
+      '</div>' +
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-lgpd-consents>Ver consentimentos</button>' +
+        '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-lgpd-anonymize>Anonimizar cliente</button>' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-lgpd-retention>Executar retenção agora</button>' +
+      '</div><small class="dim" id="lgpd-status"></small>' +
     '</div></div>' +
     '<div style="margin-top:20px"><button class="btn btn--primary" type="button" data-save-config>Salvar configurações</button> <small class="dim" id="cfg-save-status"></small></div>';
   $('#content').innerHTML = h;
@@ -2796,6 +2808,56 @@ function saveConfig() {
     if (btn) { btn.disabled = false; btn.textContent = 'Salvar configurações'; }
     if (stEl) { stEl.textContent = ''; }
     toast((e && e.message) || 'Falha ao salvar.', true);
+  });
+}
+
+/* LGPD: consentimentos, anonimização (direito de exclusão) e retenção. */
+function lgpdStatus(msg) {
+  var el = document.getElementById('lgpd-status');
+  if (el) { el.textContent = msg; }
+}
+function lgpdConsents() {
+  openModal('Consentimentos LGPD', '<p class="card__hint">Carregando…</p>');
+  getJ('admin/lgpd/consents').then(function (rows) {
+    rows = rows || [];
+    if (!rows.length) {
+      $('#modal .modal-body').innerHTML = '<p class="card__hint">Nenhum consentimento registrado ainda.</p>';
+      return;
+    }
+    var html = rows.map(function (r) {
+      var when = '';
+      try { when = new Date(r.created_at).toLocaleString('pt-BR'); } catch (e) { when = r.created_at || ''; }
+      return '<tr><td>' + esc(r.subject) + '</td><td>' + esc(r.choice) + '</td><td>' + esc(r.version) + '</td><td class="dim">' + esc(when) + '</td></tr>';
+    }).join('');
+    $('#modal .modal-body').innerHTML = tbl(['Identificador', 'Escolha', 'Versão', 'Quando'], html);
+  }, function (e) {
+    $('#modal .modal-body').innerHTML = '<p class="card__hint">' + esc((e && e.message) || 'Falha ao carregar.') + '</p>';
+  });
+}
+function lgpdAnonymize() {
+  var email = (val('lgpd-email') || '').trim().toLowerCase();
+  if (!email || email.indexOf('@') < 0) { toast('Informe um e-mail válido.', true); return; }
+  if (!window.confirm('Anonimizar TODOS os pedidos de ' + email + '? Valores e totais são preservados; nome, telefone, e-mail e notas são apagados.')) { return; }
+  lgpdStatus('Anonimizando…');
+  postJ('admin/lgpd/anonymize', { email: email }).then(function (d) {
+    lgpdStatus('Pronto: ' + ((d && d.orders) || 0) + ' pedido(s) anonimizado(s).');
+    toast('Cliente anonimizado.');
+  }, function (e) {
+    lgpdStatus('');
+    toast((e && e.message) || 'Falha ao anonimizar.', true);
+  });
+}
+function lgpdRetention() {
+  var months = parseInt(val('cfg-lgpd-retention'), 10) || 0;
+  if (!(months >= 1 && months <= 60)) { toast('Retenção entre 1 e 60 meses.', true); return; }
+  if (!window.confirm('Anonimizar pedidos com mais de ' + months + ' meses?')) { return; }
+  lgpdStatus('Executando retenção…');
+  postJ('admin/lgpd/retention', { months: months }).then(function (d) {
+    lgpdStatus('Pronto: ' + ((d && d.orders) || 0) + ' pedido(s) anonimizado(s).');
+    toast('Retenção executada.');
+  }, function (e) {
+    lgpdStatus('');
+    toast((e && e.message) || 'Falha na retenção.', true);
   });
 }
 
@@ -4025,6 +4087,9 @@ function contentClick(e) {
   el = t.closest('[data-del-user]');
   if (el) { deleteUser(el.getAttribute('data-del-user')); return; }
   if (t.closest('[data-save-user]')) { saveUser(); return; }
+  if (t.closest('[data-tfa-setup]')) { tfaSetup(); return; }
+  if (t.closest('[data-tfa-enable]')) { tfaEnable(); return; }
+  if (t.closest('[data-tfa-disable]')) { tfaDisable(); return; }
   if (t.closest('[data-my-profile]')) { openMyProfile(); return; }
 
   if (t.closest('[data-new-seller]')) { sellerModal(null); return; }
@@ -4081,6 +4146,9 @@ function contentClick(e) {
   if (t.closest('[data-save-banner]')) { saveBanner(); return; }
   if (t.closest('[data-save-config]')) { saveConfig(); return; }
   if (t.closest('[data-save-baked-fee]')) { saveBakedFee(); return; }
+  if (t.closest('[data-lgpd-consents]')) { lgpdConsents(); return; }
+  if (t.closest('[data-lgpd-anonymize]')) { lgpdAnonymize(); return; }
+  if (t.closest('[data-lgpd-retention]')) { lgpdRetention(); return; }
 }
 
 var _lasSearchTimer = null;
@@ -5129,6 +5197,59 @@ function userAvatarPreview(u) {
   return '<span class="user-face user-face--lg" id="us-avatar-img-wrap">' + esc(initials) + '</span>';
 }
 
+/* 2FA no próprio perfil: bloco + fluxos (setup → confirma → recovery / desativar). */
+function tfaBlock(isOn) {
+  return '<div class="subblock" style="margin-top:16px"><legend>Verificação em 2 etapas</legend>' +
+    '<p class="dim" style="font-size:.82rem;margin:0 0 8px">Status: <b>' + (isOn ? 'Ativada' : 'Inativa') + '</b></p>' +
+    '<div id="tfa-area">' + (isOn ? tfaDisableHtml() : '<button class="btn btn--ghost btn--sm" type="button" data-tfa-setup>Iniciar ativação</button>') + '</div></div>';
+}
+function tfaDisableHtml() {
+  return field('tfa-pass', 'Confirme sua senha para desativar', '', { type: 'password' }) +
+    '<div style="margin-top:8px"><button class="btn btn--ghost btn--sm btn--danger" type="button" data-tfa-disable>Desativar 2FA</button></div>';
+}
+function tfaPaint(html) {
+  var el = document.getElementById('tfa-area');
+  if (el) { el.innerHTML = html; }
+}
+function tfaSetup() {
+  tfaPaint('<p class="card__hint">Gerando segredo…</p>');
+  postJ('admin/2fa/setup', {}).then(function (d) {
+    var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(d.otpauth_url);
+    tfaPaint(
+      '<p class="dim" style="font-size:.82rem">1. No <b>Google Authenticator</b>, toque <b>+</b> e escaneie (ou digite a chave):</p>' +
+      '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0">' +
+        '<img src="' + esc(qr) + '" alt="QR do 2FA" style="width:140px;height:140px;border-radius:8px;background:#fff" onerror="this.style.display=\'none\'">' +
+        '<code style="font-size:.85rem;word-break:break-all">' + esc(d.secret) + '</code></div>' +
+      '<p class="dim" style="font-size:.82rem">2. Digite o código de 6 dígitos para confirmar:</p>' +
+      field('tfa-code', 'Código', '', {}) +
+      '<div style="margin-top:8px"><button class="btn btn--primary btn--sm" type="button" data-tfa-enable>Confirmar e ativar</button></div>'
+    );
+  }, function (e) {
+    tfaPaint('<p class="card__hint">Falha ao iniciar: ' + esc((e && e.message) || 'erro') + '</p>');
+  });
+}
+function tfaEnable() {
+  var code = val('tfa-code');
+  if (!code) { toast('Digite o código do app'); return; }
+  postJ('admin/2fa/enable', { code: code }).then(function (d) {
+    if (ME) { ME.totp_enabled = 1; }
+    var rec = (d.recovery || []).map(function (c) { return '<li><code>' + esc(c) + '</code></li>'; }).join('');
+    tfaPaint('<p style="color:var(--good)"><b>2FA ativada!</b> Guarde os códigos de recuperação (uso único):</p>' +
+      '<ul style="font-size:.85rem">' + rec + '</ul>');
+    toast('2FA ativada!');
+  }, function (e) { toast((e && e.message) || 'Código inválido.', true); });
+}
+function tfaDisable() {
+  var pass = val('tfa-pass');
+  if (!pass) { toast('Digite sua senha'); return; }
+  postJ('admin/2fa/disable', { password: pass }).then(function () {
+    if (ME) { ME.totp_enabled = 0; }
+    tfaPaint('<p class="card__hint">2FA desativada.</p>' +
+      '<div style="margin-top:8px"><button class="btn btn--ghost btn--sm" type="button" data-tfa-setup>Iniciar ativação</button></div>');
+    toast('2FA desativada.');
+  }, function (e) { toast((e && e.message) || 'Falha ao desativar.', true); });
+}
+
 function userModal(u) {
   var isNew = !u;
   var isMe = !!(u && ME && String(u.id) === String(ME.id));
@@ -5164,6 +5285,7 @@ function userModal(u) {
     field('us-role', 'Perfil', d.role, { type: 'select', options: roleOpts }) +
     field('us-active', 'Ativo', Number(d.active) !== 0, { type: 'checkbox' }) +
   '</div>' +
+  (isMe ? tfaBlock(Number(d.totp_enabled || (ME && ME.totp_enabled) || 0) === 1) : '') +
   '<div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">' +
     '<button class="btn btn--ghost" type="button" data-close-modal>Cancelar</button>' +
     '<button class="btn btn--primary" type="button" data-save-user="' + (isNew ? '' : d.id) + '">' + (isNew ? 'Criar' : 'Salvar') + '</button></div>';
@@ -5639,6 +5761,9 @@ var RENDER = {
       if (t.closest('[data-save-area]')) { saveArea(); return; }
       if (t.closest('[data-toggle-pass]')) { togglePass(t.closest('[data-toggle-pass]')); return; }
       if (t.closest('[data-save-user]')) { saveUser(); return; }
+      if (t.closest('[data-tfa-setup]')) { tfaSetup(); return; }
+      if (t.closest('[data-tfa-enable]')) { tfaEnable(); return; }
+      if (t.closest('[data-tfa-disable]')) { tfaDisable(); return; }
       if (t.closest('[data-avatar-pick]')) { var fi = document.getElementById('f-us-avatar-file'); if (fi) fi.click(); return; }
       if (t.closest('[data-avatar-remove]')) {
         var hid = document.getElementById('f-us-avatar');

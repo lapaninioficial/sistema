@@ -31,6 +31,21 @@
       <p class="login__err" id="login-err" role="alert"></p>
       <a class="login__back" href="index.html">← Voltar à loja</a>
     </form>
+
+    <form class="login__card" id="code-form" hidden>
+      <div class="login__logo">LP</div>
+      <h1>La <b>Panini</b></h1>
+      <p class="login__sub">Verificação em 2 etapas</p>
+
+      <label class="field__label" for="lg-code">Código do app autenticador</label>
+      <input class="field__input" id="lg-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="12">
+
+      <p class="login__note">Abra o Google Authenticator e digite o código de 6 dígitos. Sem o celular? Use um código de recuperação.</p>
+
+      <button class="btn btn--primary btn--full" type="submit">Verificar e entrar</button>
+      <p class="login__err" id="code-err" role="alert"></p>
+      <a class="login__back" href="admin-login.html">← Voltar ao login</a>
+    </form>
   </div>
 
   <div class="login" id="setup" hidden>
@@ -119,10 +134,29 @@
       var pass = $('#lg-pass').value;
       var errEl = $('#login-err');
       errEl.textContent = '';
-      apiReq('POST', 'auth/login', { email: email, password: pass }).then(function () {
+      apiReq('POST', 'auth/login', { email: email, password: pass }).then(function (d) {
+        if (d && d.need2fa) {
+          $('#login-form').hidden = true;
+          $('#code-form').hidden = false;
+          $('#lg-code').focus();
+          return;
+        }
         window.location.href = 'admin.html';
       }, function (err) {
         errEl.textContent = (err && err.message) || 'Falha no login.';
+      });
+    });
+
+    $('#code-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var errEl = $('#code-err');
+      errEl.textContent = '';
+      var code = $('#lg-code').value.trim();
+      if (!code) { errEl.textContent = 'Digite o código.'; return; }
+      apiReq('POST', 'auth/verify-2fa', { code: code }).then(function () {
+        window.location.href = 'admin.html';
+      }, function (err) {
+        errEl.textContent = (err && err.message) || 'Código inválido.';
       });
     });
 

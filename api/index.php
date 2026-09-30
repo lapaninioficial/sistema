@@ -27,6 +27,7 @@ try {
     require __DIR__ . '/../app/helpers.php';
     require __DIR__ . '/../app/db.php';
     require __DIR__ . '/../app/auth.php';
+    require __DIR__ . '/../app/totp.php';
     require __DIR__ . '/../app/store.php';
     require __DIR__ . '/turnstile.php';
 
@@ -107,6 +108,8 @@ try {
     api_admin_uploads_register($router);
     api_admin_home_register($router);
     api_admin_users_register($router);
+    api_admin_2fa_register($router);
+    api_admin_lgpd_register($router);
     api_admin_sellers_register($router);
     api_admin_settings_register($router);
     api_admin_financial_register($router);
