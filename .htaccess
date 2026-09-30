@@ -2,6 +2,17 @@
 # MIME + cache longo para estáticos (CSS/JS usam ?v= cache-busting).
 Options -Indexes
 
+# Produção: força HTTPS + www SOMENTE no domínio oficial
+# (localhost, homolog e outros domínios não são afetados).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^lapanini\.com\.br$ [NC]
+  RewriteRule ^ https://www.lapanini.com.br%{REQUEST_URI} [R=301,L]
+  RewriteCond %{HTTP_HOST} ^www\.lapanini\.com\.br$ [NC]
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
+
 <IfModule mod_mime.c>
   AddType image/webp .webp
 </IfModule>
