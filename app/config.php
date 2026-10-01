@@ -6,7 +6,11 @@
  * (MySQL® Databases > usuário/senha/banco criados).
  */
 
-define('APP_ENV', 'prod');                 // 'prod' ativa cookies Secure em produção
+/* APP_ENV: 'dev' no localhost (cookie sem Secure, funciona em http),
+   'prod' na HostGator (cookie Secure em https). Auto-detect pelo host. */
+$__lp_host = strtolower((string)($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
+$__lp_local = $__lp_host === '' || (bool)preg_match('/localhost|127\.0\.0\.1|\.test$|\.local$|^192\.168\.|^10\./', $__lp_host);
+define('APP_ENV', $__lp_local ? 'dev' : 'prod'); // localhost=http | HostGator=https
 define('DB_HOST', 'localhost');            // HostGator: normalmente localhost
 define('DB_NAME', 'lapanini');
 define('DB_USER', 'root');

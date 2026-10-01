@@ -1916,6 +1916,7 @@ function renderMenu() {
       gt.addEventListener('scroll', updateGroupArrows, { passive: true });
     }
   });
+  initMenuSpy();
 }
 
 function updateGroupArrows() {
@@ -1949,6 +1950,104 @@ function updateMenuArrows() {
   if (!can) { prev.hidden = true; next.hidden = true; return; }
   prev.hidden = track.scrollLeft <= 2;
   next.hidden = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+}
+
+/* ---------- Menu mobile: centralizar chip + scroll-spy (Todos) ----------
+   Híbrido: clique filtra (como hoje) mas o chip vai para o centro da barra.
+   No modo "Todos", rolar o cardápio atualiza o chip ativo e a barra acompanha. */
+function centerChip(chip, behavior) {
+  var bar = $('#categories');
+  if (!bar || !chip) { return; }
+  /* Mede DEPOIS do layout assentar (pós renderMenu): sem isso o
+     getBoundingClientRect vinha zerado e o chip nunca centralizava. */
+  var doCenter = function () {
+    try {
+      if (bar.scrollWidth <= bar.clientWidth + 4) { return; }
+      var barRect = bar.getBoundingClientRect();
+      var chipRect = chip.getBoundingClientRect();
+      if (!chipRect.width) { return; }
+      var delta = (chipRect.left + chipRect.width / 2) - (barRect.left + barRect.width / 2);
+      if (Math.abs(delta) < 2) { return; }
+      /* scrollTo no container (não scrollIntoView): não mexe no scroll
+         vertical da página, evita a "tremida". */
+      var target = bar.scrollLeft + delta;
+      if (bar.scrollTo) { bar.scrollTo({ left: target, behavior: behavior || 'smooth' }); }
+      else { bar.scrollLeft = target; }
+    } catch (e) {}
+  };
+  requestAnimationFrame(function () { requestAnimationFrame(doCenter); });
+}
+
+function paintActiveChip(catId, shouldCenter) {
+  var chips = $$('#categories .chip');
+  if (!chips.length) { return null; }
+  var active = null;
+  chips.forEach(function (ch) {
+    var on = ch.getAttribute('data-cat') === catId;
+    ch.classList.toggle('active', on);
+    if (on) { active = ch; }
+  });
+  if (active && shouldCenter !== false) { centerChip(active); }
+  return active;
+}
+
+var menuSpyObserver = null;
+var menuSpyPausedUntil = 0;
+function pauseMenuSpy(ms) { menuSpyPausedUntil = Date.now() + (ms || 900); }
+
+function initMenuSpy() {
+  if (!('IntersectionObserver' in window)) { return; }
+  if (menuSpyObserver) { try { menuSpyObserver.disconnect(); } catch (e) {} menuSpyObserver = null; }
+  if (S.filter !== 'all') { return; }
+  var groups = $$('#menuRows .menu-group');
+  if (!groups.length) { return; }
+  menuSpyObserver = new IntersectionObserver(function (entries) {
+    if (S.filter !== 'all') { return; }
+    if (Date.now() < menuSpyPausedUntil) { return; }
+    var best = null;
+    var bestTop = Infinity;
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) { return; }
+      var top = Math.abs(en.boundingClientRect.top - barsOffset(true));
+      if (top < bestTop) { bestTop = top; best = en.target; }
+    });
+    if (!best) { return; }
+    var catId = best.getAttribute && best.getAttribute('data-group');
+    if (!catId) { return; }
+    var cur = $('#categories .chip.active');
+    if (cur && cur.getAttribute('data-cat') === catId) { return; }
+    paintActiveChip(catId, true);
+  }, { rootMargin: '-140px 0px -55% 0px', threshold: [0, 0.1, 0.25] });
+  groups.forEach(function (g) { menuSpyObserver.observe(g); });
+}
+
+/* Fallback do spy via scroll da janela (cobre mobile onde o IO oscila):
+   acha a última seção que passou da sonda abaixo da barra e ativa o chip. */
+var menuSpyTicking = false;
+function menuSpyOnScroll() {
+  if (menuSpyTicking) { return; }
+  menuSpyTicking = true;
+  requestAnimationFrame(function () {
+    menuSpyTicking = false;
+    if (typeof S === 'undefined' || S.filter !== 'all') { return; }
+    if (Date.now() < menuSpyPausedUntil) { return; }
+    var groups = $$('#menuRows .menu-group');
+    if (!groups.length) { return; }
+    var probe = barsOffset(true) + Math.round(window.innerHeight * 0.15);
+    var current = null;
+    groups.forEach(function (g) {
+      try {
+        var top = g.getBoundingClientRect().top + window.scrollY;
+        if (window.scrollY + probe >= top) { current = g; }
+      } catch (e) {}
+    });
+    if (!current) { current = groups[0]; }
+    var catId = current.getAttribute && current.getAttribute('data-group');
+    if (!catId) { return; }
+    var cur = $('#categories .chip.active');
+    if (cur && cur.getAttribute('data-cat') === catId) { return; }
+    paintActiveChip(catId, true);
+  });
 }
 
 function barsOffset(withCatsBar) {
@@ -2330,6 +2429,8 @@ function handleHash() {
     setFilter(m[1]);
     var sec = $('#cardapio');
     if (sec && sec.scrollIntoView) { sec.scrollIntoView(); }
+    var hashChip = $('#categories .chip.active');
+    if (hashChip) { centerChip(hashChip, 'auto'); }
   }
 }
 
@@ -2434,22 +2535,29 @@ document.addEventListener('click', function (e) {
   t = e.target.closest('[data-cat]');
   if (t) {
     var catFilter = t.getAttribute('data-cat');
-    var catsBar = $('#categories');
-    var catsX = catsBar ? catsBar.scrollLeft : 0;
-    // Chip já ativo: nada muda — só preserva a rolagem horizontal e sai
-    // (antes re-renderizava e disparava scroll suave à toa = "tremida").
+    // Chip já ativo: só centraliza (sem re-render / sem "tremida" vertical).
     if (catFilter === S.filter) {
-      if (catsBar) { catsBar.scrollLeft = catsX; }
+      centerChip(t);
       return;
     }
     // Novo clique invalida a correção pendente do clique anterior.
     var catGen = ++catScrollGen;
     if (catScrollTimer) { clearTimeout(catScrollTimer); catScrollTimer = null; }
+    pauseMenuSpy(1000);
     setFilter(catFilter);
     var activeChip = $('#categories .chip.active');
     if (activeChip && activeChip.focus) { try { activeChip.focus({ preventScroll: true }); } catch (eFocus) {} }
-    var catsBarAfter = $('#categories');
-    if (catsBarAfter) { catsBarAfter.scrollLeft = catsX; }
+    if (activeChip) {
+      centerChip(activeChip);
+      /* Reforço pós-layout: o renderMenu recria os chips, então o
+         scrollWidth só estabiliza no próximo frame (ex.: "Frutos do Mar"). */
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          var c = $('#categories .chip.active');
+          if (c) { centerChip(c, 'smooth'); }
+        });
+      });
+    }
     // Categoria fixa no topo + título dos itens logo abaixo da barra
     // (repete após o layout assentar; sem tocar nos carrosséis)
     var scrollBarIntoView = function () {
@@ -3149,6 +3257,7 @@ function init() {
   if (mtrack) { mtrack.addEventListener('scroll', updateMenuArrows, { passive: true }); }
   window.addEventListener('resize', updateMenuArrows);
   window.addEventListener('resize', updateGroupArrows);
+  window.addEventListener('scroll', menuSpyOnScroll, { passive: true });
   window.addEventListener('hashchange', handleHash);
   handleHash();
 }
