@@ -29,9 +29,16 @@ function current_user(): ?array
     if ($cache !== null) {
         return $cache;
     }
-    $st = db()->prepare('SELECT id, name, email, role, avatar FROM users WHERE id = ? AND active = 1');
+    $st = db()->prepare(
+        (auth_avatar_col()
+            ? 'SELECT id, name, email, role, avatar FROM users WHERE id = ? AND active = 1'
+            : 'SELECT id, name, email, role FROM users WHERE id = ? AND active = 1')
+    );
     $st->execute([(int)$_SESSION['uid']]);
     $u = $st->fetch();
+    if ($u && !array_key_exists('avatar', $u)) {
+        $u['avatar'] = null;
+    }
     if ($u && auth_totp_cols()) {
         try {
             $t = db()->prepare('SELECT totp_enabled FROM users WHERE id = ?');
@@ -75,6 +82,22 @@ function auth_totp_cols(): bool
     if ($has === null) {
         try {
             $has = db()->query("SHOW COLUMNS FROM users LIKE 'totp_enabled'")->fetch() ? true : false;
+        } catch (Throwable $e) {
+            $has = false;
+        }
+    }
+    return $has;
+}
+
+/** Coluna avatar pode não existir (migration 08 pendente): detecta uma vez.
+ *  Sem isto, o auth/me estourava 500 "Unknown column 'avatar'" logo após
+ *  o login e o painel voltava ao login em loop. */
+function auth_avatar_col(): bool
+{
+    static $has = null;
+    if ($has === null) {
+        try {
+            $has = db()->query("SHOW COLUMNS FROM users LIKE 'avatar'")->fetch() ? true : false;
         } catch (Throwable $e) {
             $has = false;
         }

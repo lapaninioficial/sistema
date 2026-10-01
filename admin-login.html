@@ -25,6 +25,12 @@
       <label class="field__label" for="lg-pass">Senha</label>
       <input class="field__input" id="lg-pass" type="password" autocomplete="current-password" placeholder="••••••••">
 
+      <div class="login__opts" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:.45rem 0 .2rem">
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer"><input type="checkbox" id="lg-show"> Mostrar senha</label>
+        <a href="#" id="lg-forgot" style="font-size:.85rem">Esqueci a senha</a>
+      </div>
+      <p class="login__note" id="forgot-help" hidden>Sem e-mail de recuperação configurado: peça a outro administrador para redefinir sua senha em Painel → Usuários, ou redefina pelo phpMyAdmin na tabela <code>users</code> (coluna <code>password_hash</code>, mínimo 8 caracteres).</p>
+
       <p class="login__note">Acesso restrito — use seu e-mail e senha de administrador.</p>
 
       <button class="btn btn--primary btn--full" type="submit">Entrar</button>
@@ -80,7 +86,8 @@
     function apiReq(method, path, payload) {
       return fetch('api/' + path, {
         method: method,
-        headers: { 'Accept': 'application/json' },
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: payload ? JSON.stringify(payload) : undefined
       }).then(function (r) {
         return r.text().then(function (raw) {
@@ -126,6 +133,16 @@
         $('#login').hidden = false;
         $('#login-err').textContent = (err && err.message) || '';
       });
+    });
+
+    // Mostrar senha + ajuda de recuperação (sem SMTP: reset por outro admin ou phpMyAdmin).
+    $('#lg-show').addEventListener('change', function () {
+      $('#lg-pass').type = this.checked ? 'text' : 'password';
+    });
+    $('#lg-forgot').addEventListener('click', function (e) {
+      e.preventDefault();
+      var h = $('#forgot-help');
+      h.hidden = !h.hidden;
     });
 
     $('#login-form').addEventListener('submit', function (e) {

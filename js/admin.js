@@ -82,6 +82,7 @@ function apiRequest(method, path, payload) {
   var opts = {
     method: method,
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
     body: payload ? JSON.stringify(payload) : undefined
   };
   if (ctrl) { opts.signal = ctrl.signal; }

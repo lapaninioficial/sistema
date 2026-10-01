@@ -7,7 +7,14 @@ function api_admin_users_register(Router $r): void
 {
     $r->get('/admin/users', function () {
         require_admin();
-        ok(db()->query('SELECT id, name, email, role, active, avatar, created_at FROM users ORDER BY id')->fetchAll());
+        if (auth_avatar_col()) {
+            ok(db()->query('SELECT id, name, email, role, active, avatar, created_at FROM users ORDER BY id')->fetchAll());
+            return;
+        }
+        $rows = db()->query('SELECT id, name, email, role, active, created_at FROM users ORDER BY id')->fetchAll();
+        foreach ($rows as &$r0) { $r0['avatar'] = null; }
+        unset($r0);
+        ok($rows);
     });
 
     $r->post('/admin/users', function () {
@@ -76,14 +83,27 @@ function api_admin_users_register(Router $r): void
         }
         if ($avatar === '') { $avatar = null; }
 
+        $hasAvatar = auth_avatar_col();
+        if (!$hasAvatar && array_key_exists('avatar', $d) && trim((string)$d['avatar']) !== '') {
+            err('Coluna avatar ausente: importe sql/08-users-avatar.sql.', 500);
+        }
+
         if (pick($d, 'password', null) !== null && (string)$d['password'] !== '') {
             $pass = (string)$d['password'];
             if (strlen($pass) < 8) { err('A senha precisa de pelo menos 8 caracteres.', 400); }
-            $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, active=?, avatar=?, password_hash=? WHERE id=?');
-            $st->execute([$name, $email, $role, $active ? 1 : 0, $avatar, password_hash($pass, PASSWORD_DEFAULT), $id]);
-        } else {
+            if ($hasAvatar) {
+                $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, active=?, avatar=?, password_hash=? WHERE id=?');
+                $st->execute([$name, $email, $role, $active ? 1 : 0, $avatar, password_hash($pass, PASSWORD_DEFAULT), $id]);
+            } else {
+                $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, active=?, password_hash=? WHERE id=?');
+                $st->execute([$name, $email, $role, $active ? 1 : 0, password_hash($pass, PASSWORD_DEFAULT), $id]);
+            }
+        } elseif ($hasAvatar) {
             $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, active=?, avatar=? WHERE id=?');
             $st->execute([$name, $email, $role, $active ? 1 : 0, $avatar, $id]);
+        } else {
+            $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, active=? WHERE id=?');
+            $st->execute([$name, $email, $role, $active ? 1 : 0, $id]);
         }
         ok(user_row($id));
     });
@@ -96,6 +116,9 @@ function api_admin_users_register(Router $r): void
         if (!$cur) { err('Usuário não encontrado.', 404); }
         if ($me['role'] !== 'admin' && (int)$me['id'] !== $id) {
             err('Você só pode alterar a sua própria foto.', 403);
+        }
+        if (!auth_avatar_col()) {
+            err('Coluna avatar ausente: importe sql/08-users-avatar.sql.', 500);
         }
         if (empty($_FILES['avatar']) || !is_array($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
             err('Selecione uma imagem válida.', 400);
@@ -154,7 +177,14 @@ function api_admin_users_register(Router $r): void
 
 function user_row(int $id): ?array
 {
-    $st = db()->prepare('SELECT id, name, email, role, active, avatar, created_at FROM users WHERE id = ?');
+    if (auth_avatar_col()) {
+        $st = db()->prepare('SELECT id, name, email, role, active, avatar, created_at FROM users WHERE id = ?');
+        $st->execute([$id]);
+        return $st->fetch() ?: null;
+    }
+    $st = db()->prepare('SELECT id, name, email, role, active, created_at FROM users WHERE id = ?');
     $st->execute([$id]);
-    return $st->fetch() ?: null;
+    $row = $st->fetch() ?: null;
+    if ($row) { $row['avatar'] = null; }
+    return $row;
 }
