@@ -84,6 +84,10 @@ body {
 
 body.no-scroll { overflow: hidden; }
 
+/* Trava anti-estouro horizontal (cabeçalho compacto do mobile nunca
+   ultrapassa a largura do navegador do celular). */
+html, body { overflow-x: clip; }
+
 /* Acesso rápido (sacola) */
 .quick-access { margin-bottom: 1rem; }
 .quick-access .kicker { margin-bottom: 0.15rem; }
@@ -308,6 +312,7 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
   position: sticky;
   top: 0;
   z-index: 60;
+  padding-top: env(safe-area-inset-top, 0px);
   background: rgba(13, 11, 10, 0.86);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-soft);
@@ -468,11 +473,11 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
   box-shadow: 0 3px 8px rgba(242, 107, 33, 0.4);
 }
 
-/* Ícones de tema (header) */
-#theme-btn .icon-sun { display: none; width: 19px; height: 19px; }
-#theme-btn .icon-moon { display: block; width: 19px; height: 19px; }
-[data-theme="light"] #theme-btn .icon-sun { display: block; width: 19px; height: 19px; }
-[data-theme="light"] #theme-btn .icon-moon { display: none; }
+/* Ícones de tema (header + flutuante) */
+#theme-btn .icon-sun, .floating-theme .icon-sun { display: none; width: 19px; height: 19px; }
+#theme-btn .icon-moon, .floating-theme .icon-moon { display: block; width: 19px; height: 19px; }
+[data-theme="light"] #theme-btn .icon-sun, [data-theme="light"] .floating-theme .icon-sun { display: block; width: 19px; height: 19px; }
+[data-theme="light"] #theme-btn .icon-moon, [data-theme="light"] .floating-theme .icon-moon { display: none; }
 .top-btn--icon { padding: 8px; min-width: 40px; }
 .top-btn--icon .top-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -637,8 +642,7 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
 #cardapio,
 #promocoes,
 #duvidas,
-.menu-group,
-.menu-head { scroll-margin-top: calc(var(--header-h) + 76px); }
+.menu-group { scroll-margin-top: calc(var(--header-h) + 76px); }
 
 .chip {
   display: inline-flex;
@@ -686,21 +690,14 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
   scroll-snap-align: start;
 }
 
-/* Todos: cada categoria em seu próprio carrossel */
+/* Cardápio sempre agrupado: cada categoria em seu próprio carrossel */
 .menu-track.is-grouped {
   display: block;
   overflow: visible;
   scroll-snap-type: none;
   padding: 0.6rem 20px 1.2rem 4px;
 }
-.menu-track.is-list {
-  flex-wrap: wrap;
-  overflow: visible;
-  scroll-snap-type: none;
-}
 .menu-group { flex: 1 1 100%; min-width: 0; padding-top: 1.4rem; }
-/* Cabeçalho da visão filtrada (mesmo padrão dos grupos do "Todos") */
-.menu-head { padding: 1.4rem 20px 0.2rem 4px; }
 .menu-group__title {
   font-family: "Anton SC", Impact, sans-serif;
   font-style: normal;
@@ -721,6 +718,13 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
   letter-spacing: 0.08em;
   margin: 0 0 0.45rem;
 }
+
+/* Tema claro: títulos fixados em creme no CSS ficam invisíveis no fundo
+   claro — usa a cor de texto do tema. */
+[data-theme="light"] .menu-group__title { color: var(--text); }
+[data-theme="light"] .acc-title { color: var(--text); }
+[data-theme="light"] #track .panel__head h2 { color: var(--text); }
+[data-theme="light"] .coupon-btn b { color: var(--brand); }
 .menu-group__grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 1rem; }
 .menu-group__grid .p-card { flex: 1 1 240px; max-width: 340px; }
 
@@ -1343,6 +1347,26 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
   place-items: center;
 }
 
+/* ---------- Botão flutuante de tema (só mobile; no desktop fica no header) ---------- */
+
+.floating-theme {
+  position: fixed;
+  right: 18px;
+  z-index: 65;
+  display: none;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s;
+}
+.floating-theme:hover { transform: translateY(-2px) scale(1.04); }
+.floating-theme svg { width: 22px; height: 22px; }
+
 /* ---------- Drawer (sacola e checkout) ---------- */
 
 .drawer { position: fixed; inset: 0; z-index: 75; pointer-events: none; }
@@ -1707,10 +1731,9 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 14px); }
 
 /* ---------- Calculadora de Eventos ---------- */
 
+/* Calculadora embutida no grupo Doces do cardápio */
 #event-calc-container {
-  max-width: 1220px;
-  margin: 0 auto;
-  padding: 4px 20px 0;
+  margin: 0.8rem 0 0;
 }
 
 .event-calc {
@@ -2898,6 +2921,30 @@ body.reveal .xs-item.is-in { opacity: 1; transform: none; }
   .menu-track .p-card { flex-basis: min(var(--menu-card-w), 76vw); }
   .menu-arrow { display: none; }
 
+  /* Cabeçalho compacto sem estouro: tema sai do header (vira flutuante
+     abaixo do carrinho) e os botões encolhem para caber em 360px */
+  #theme-btn { display: none; }
+  .header__actions { gap: 6px; }
+  .floating-theme { display: grid; bottom: 86px; }
+  .floating-cart { bottom: 152px; }
+
+  /* Cardápio em lista 1 por linha no celular (substitui o carrossel;
+     desktop continua carrossel) */
+  .menu-group__track {
+    flex-wrap: wrap;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .menu-group__track .p-card {
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+  }
+  .menu-group__grid .p-card {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
   .steps__grid { grid-template-columns: 1fr; }
   .benefits__grid { grid-template-columns: 1fr 1fr; }
   .footer__grid { grid-template-columns: 1fr; }
@@ -2919,7 +2966,17 @@ body.reveal .xs-item.is-in { opacity: 1; transform: none; }
   .step { justify-content: flex-start; }
 
   .fab { right: 12px; }
-  .floating-cart { right: 12px; bottom: 80px; }
+  .floating-cart { right: 12px; bottom: 146px; }
+  .floating-theme { right: 12px; bottom: 80px; }
+
+  /* Telas estreitas: selo vira só o ponto (mantém aberto/fechado pela cor),
+     logo e botões encolhem para o header caber sem rolagem lateral */
+  #header-status-text { font-size: 0; }
+  #header-status-text small { display: none; }
+  .open { padding: 6px 8px; max-width: none; }
+  .brand__img { height: 36px; max-width: 30vw; }
+  .header__inner { gap: 6px; padding: 0 10px; }
+  .top-btn { min-width: 36px; padding: 8px; }
 
   .toast { bottom: 88px; }
   .offer__close { margin-left: 0; }

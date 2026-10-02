@@ -54,7 +54,7 @@ var CATEGORIES = [
   { id: 'especiais',               name: 'Lasanhas Sabores Especiais',  short: 'Especiais',            kicker: 'Nossos sabores especiais' },
   { id: 'lowcarb',                 name: 'Lasanhas Low Carb',           short: 'Low Carb',             kicker: 'Nossos sabores low carb' },
   { id: 'frutosdormar',            name: 'Frutos do Mar',               short: 'Frutos do Mar',        kicker: 'Lasanhas de frutos do mar' },
-  { id: 'doces',                   name: 'Kits Mini para Eventos',   short: 'Kits Mini',              kicker: 'Lasanhas individuais para eventos — calcule pela quantidade de convidados' },
+  { id: 'doces',                   name: 'Kits Mini',                short: 'Kits Mini',              kicker: 'Lasanhas individuais para eventos — calcule pela quantidade de convidados' },
   { id: 'sobremesas',              name: 'Sobremesas Variadas',         short: 'Sobremesas',           kicker: 'Para adoçar depois da mesa' },
   { id: 'massa-fresca',             name: 'Massa Fresca da Casa',        short: 'Massa Fresca',         kicker: 'Massa fresca artesanal, feita na casa' },
   { id: 'molhos-caseiros',          name: 'Molhos Caseiros',             short: 'Molhos',               kicker: 'Molhos artesanais feitos na casa, por litro' },

@@ -29,7 +29,7 @@ function turnstile_verify(string $token): bool
         return false;
     }
     if (!function_exists('curl_init')) {
-        error_log('Lapanini Turnstile: cURL indisponível; bloqueio por segurança.');
+        error_log('La Panini Turnstile: cURL indisponível; bloqueio por segurança.');
         return false;
     }
     $ch = curl_init();
@@ -47,7 +47,7 @@ function turnstile_verify(string $token): bool
     $no = curl_errno($ch);
     curl_close($ch);
     if ($no !== 0 || !is_string($raw)) {
-        error_log('Lapanini Turnstile: falha de rede no siteverify (cURL ' . $no . ').');
+        error_log('La Panini Turnstile: falha de rede no siteverify (cURL ' . $no . ').');
         return false;
     }
     $j = json_decode($raw, true);
@@ -72,12 +72,12 @@ function turnstile_guard(string $path, string $method): void
     }
     $d = body();
     if (empty($d['cf_present'])) {
-        error_log('Lapanini Turnstile: mutação admin sem widget (transição). ' . $method . ' ' . $path);
+        error_log('La Panini Turnstile: mutação admin sem widget (transição). ' . $method . ' ' . $path);
         return;
     }
     $secret = defined('TURNSTILE_SECRET_KEY') ? (string)TURNSTILE_SECRET_KEY : '';
     if ($secret === '') {
-        error_log('Lapanini Turnstile: SECRET vazia; mutação liberada em transição. ' . $method . ' ' . $path);
+        error_log('La Panini Turnstile: SECRET vazia; mutação liberada em transição. ' . $method . ' ' . $path);
         return;
     }
     $token = (string)($d['cf_turnstile_token'] ?? '');

@@ -93,7 +93,6 @@ function hasPreparo(p) {
 /* ---------- Estado ---------- */
 
 var S = {
-  filter: 'all',
   account: storage.get('lapanini_account', null),
   accountMode: storage.get('lapanini_account_mode', 'login'),
   quickMode: 'login',
@@ -1751,29 +1750,17 @@ function visibleCategories() {
   });
 }
 function renderCategories() {
-  var chips = '<button class="chip' + (S.filter === 'all' ? ' active' : '') + '" type="button" data-cat="all">Todos</button>';
-  chips += visibleCategories().map(function (c) {
-    return '<button class="chip' + (S.filter === c.id ? ' active' : '') + '" type="button" data-cat="' + c.id + '">' + esc(c.short) + '</button>';
+  var chips = visibleCategories().map(function (c) {
+    return '<button class="chip" type="button" data-cat="' + c.id + '">' + esc(c.short) + '</button>';
   }).join('');
   var catsBar = $('#categories');
   catsBar.innerHTML = chips;
   catsBar.removeAttribute('aria-busy');
   catsBar.removeAttribute('aria-label');
-  $$('#categories .chip').forEach(function (ch) {
-    ch.classList.toggle('active', ch.getAttribute('data-cat') === S.filter);
-  });
-  var list = $('#catList');
-  if (list) { list.hidden = true; list.innerHTML = ''; }
 }
 
-function grid(products) {
-  if (!products.length) {
-    return '<div class="empty-state">' + ICON_BAG + '<p>Nada por aqui ainda. Explore outras categorias.</p></div>';
-  }
-  return products.map(card).join('');
-}
-
-/* Todos: cardápio agrupado por categoria, cada categoria em seu próprio carrossel. */
+/* Cardápio sempre agrupado por categoria, cada uma em seu próprio carrossel.
+   As categorias da barra são navegação (rolam até o grupo), não filtro. */
 function gridGrouped() {
   return CATEGORIES.map(function (c) {
     var list = PRODUCTS.filter(function (p) { return p.cat === c.id; });
@@ -1784,6 +1771,7 @@ function gridGrouped() {
       '<div class="menu-carousel"><div class="menu-track menu-group__track">' + list.map(card).join('') + '</div>' +
       '<button class="menu-arrow menu-arrow--prev" type="button" data-group-scroll="-1" aria-label="Anterior em ' + esc(c.short) + '">‹</button>' +
       '<button class="menu-arrow menu-arrow--next" type="button" data-group-scroll="1" aria-label="Próximo em ' + esc(c.short) + '">›</button></div>' +
+      (c.id === 'doces' ? '<div id="event-calc-container">' + renderEventCalc() + '</div>' : '') +
     '</section>';
   }).join('');
 }
@@ -1873,42 +1861,13 @@ function card(p) {
 }
 
 function renderMenu() {
-  var f = S.filter;
-  var list = f === 'all' ? PRODUCTS.slice() : PRODUCTS.filter(function (p) { return p.cat === f; });
   renderCategories();
-  var calcContainer = $('#event-calc-container');
-  if (calcContainer) {
-    calcContainer.innerHTML = f === 'doces' ? renderEventCalc() : '';
-  }
-  $('#menuRows').innerHTML = f === 'all' ? gridGrouped() : grid(list);
+  $('#menuRows').innerHTML = gridGrouped();
   var track = $('#menuRows');
   track.removeAttribute('aria-busy');
   track.removeAttribute('aria-label');
-  // Visão filtrada: cabeçalho com título + subtítulo da categoria
-  // (na visão "Todos" cada grupo já tem o seu).
-  if (track) {
-    var car = track.closest ? track.closest('.menu-carousel') : null;
-    var head = car ? car.querySelector('.menu-head') : null;
-    if (f === 'all') {
-      if (head) { head.remove(); }
-    } else {
-      var c = (typeof catOf === 'function') ? catOf(f) : null;
-      var h = c ? ((c.kicker ? '<p class="menu-group__kicker">' + esc(c.kicker) + '</p>' : '') +
-        '<h3 class="menu-group__title">' + esc(c.name) + '</h3>') : '';
-      if (!head && car) {
-        head = document.createElement('div');
-        head.className = 'menu-head';
-        car.insertBefore(head, track);
-      }
-      if (head) { head.innerHTML = h; }
-    }
-  }
-  if (track) {
-    track.classList.toggle('is-list', false);
-    track.classList.toggle('is-grouped', S.filter === 'all');
-    track.scrollLeft = 0;
-  }
-  updateMenuArrows();
+  track.classList.add('is-grouped');
+  track.scrollLeft = 0;
   updateGroupArrows();
   $$('#menuRows .menu-group__track').forEach(function (gt) {
     if (gt.dataset && !gt.dataset.scrollBound) {
@@ -1932,29 +1891,9 @@ function updateGroupArrows() {
   });
 }
 
-function updateMenuArrows() {
-  var track = $('#menuRows');
-  if (!track) { return; }
-  /* Setas globais = filhas diretas do carrossel externo (não as dos grupos do "Todos"). */
-  var car = track.parentNode && track.parentNode.classList && track.parentNode.classList.contains('menu-carousel')
-    ? track.parentNode : null;
-  var prev = car ? car.querySelector(':scope > .menu-arrow--prev') : null;
-  var next = car ? car.querySelector(':scope > .menu-arrow--next') : null;
-  if (!prev || !next) {
-    prev = $('.menu-arrow--prev');
-    next = $('.menu-arrow--next');
-  }
-  if (!prev || !next) { return; }
-  if (track.classList.contains('is-grouped')) { prev.hidden = true; next.hidden = true; return; }
-  var can = track.scrollWidth > track.clientWidth + 4;
-  if (!can) { prev.hidden = true; next.hidden = true; return; }
-  prev.hidden = track.scrollLeft <= 2;
-  next.hidden = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
-}
-
-/* ---------- Menu mobile: centralizar chip + scroll-spy (Todos) ----------
-   Híbrido: clique filtra (como hoje) mas o chip vai para o centro da barra.
-   No modo "Todos", rolar o cardápio atualiza o chip ativo e a barra acompanha. */
+/* ---------- Centralizar chip + scroll-spy do cardápio ----------
+   O cardápio é sempre agrupado: rolar atualiza o chip ativo e a barra acompanha.
+   Clique na categoria rola até o grupo (navegação), sem filtrar. */
 function centerChip(chip, behavior) {
   var bar = $('#categories');
   if (!bar || !chip) { return; }
@@ -1978,7 +1917,7 @@ function centerChip(chip, behavior) {
   requestAnimationFrame(function () { requestAnimationFrame(doCenter); });
 }
 
-function paintActiveChip(catId, shouldCenter) {
+function paintActiveChip(catId, mode) {
   var chips = $$('#categories .chip');
   if (!chips.length) { return null; }
   var active = null;
@@ -1987,8 +1926,36 @@ function paintActiveChip(catId, shouldCenter) {
     ch.classList.toggle('active', on);
     if (on) { active = ch; }
   });
-  if (active && shouldCenter !== false) { centerChip(active); }
+  if (!active || mode === false) { return active; }
+  if (mode === 'spy') { centerChipSpy(active); }
+  else { centerChip(active); }
   return active;
+}
+
+/* Centralização do SPY (rolagem com o dedo): instantânea + zona morta.
+   O smooth encavalava uma animação de ~300ms por troca de seção = tremida. */
+var lastSpyCenterAt = 0;
+function centerChipSpy(chip) {
+  var now = Date.now();
+  if (now - lastSpyCenterAt < 450) { return; }
+  var bar = $('#categories');
+  if (!bar || !chip) { return; }
+  try {
+    if (bar.scrollWidth <= bar.clientWidth + 4) { return; }
+    var barRect = bar.getBoundingClientRect();
+    var chipRect = chip.getBoundingClientRect();
+    if (!chipRect.width) { return; }
+    var delta = (chipRect.left + chipRect.width / 2) - (barRect.left + barRect.width / 2);
+    /* Zona morta: só mexe se o chip saiu do terço central ou está cortado.
+       Micro-desalinhamentos de 1-2px não disparam mais animação. */
+    var dead = Math.max(24, bar.clientWidth * 0.22);
+    var cutL = chipRect.left < barRect.left + 8;
+    var cutR = chipRect.right > barRect.right - 8;
+    if (Math.abs(delta) < dead && !cutL && !cutR) { return; }
+    lastSpyCenterAt = now;
+    pauseMenuSpy(350);
+    bar.scrollTo({ left: bar.scrollLeft + delta, behavior: 'auto' });
+  } catch (e) {}
 }
 
 var menuSpyObserver = null;
@@ -1998,11 +1965,9 @@ function pauseMenuSpy(ms) { menuSpyPausedUntil = Date.now() + (ms || 900); }
 function initMenuSpy() {
   if (!('IntersectionObserver' in window)) { return; }
   if (menuSpyObserver) { try { menuSpyObserver.disconnect(); } catch (e) {} menuSpyObserver = null; }
-  if (S.filter !== 'all') { return; }
   var groups = $$('#menuRows .menu-group');
   if (!groups.length) { return; }
   menuSpyObserver = new IntersectionObserver(function (entries) {
-    if (S.filter !== 'all') { return; }
     if (Date.now() < menuSpyPausedUntil) { return; }
     var best = null;
     var bestTop = Infinity;
@@ -2016,7 +1981,7 @@ function initMenuSpy() {
     if (!catId) { return; }
     var cur = $('#categories .chip.active');
     if (cur && cur.getAttribute('data-cat') === catId) { return; }
-    paintActiveChip(catId, true);
+    paintActiveChip(catId, 'spy');
   }, { rootMargin: '-140px 0px -55% 0px', threshold: [0, 0.1, 0.25] });
   groups.forEach(function (g) { menuSpyObserver.observe(g); });
 }
@@ -2024,12 +1989,15 @@ function initMenuSpy() {
 /* Fallback do spy via scroll da janela (cobre mobile onde o IO oscila):
    acha a última seção que passou da sonda abaixo da barra e ativa o chip. */
 var menuSpyTicking = false;
+var menuSpyLastRun = 0;
 function menuSpyOnScroll() {
+  var now = Date.now();
+  if (now - menuSpyLastRun < 120) { return; }
   if (menuSpyTicking) { return; }
   menuSpyTicking = true;
   requestAnimationFrame(function () {
     menuSpyTicking = false;
-    if (typeof S === 'undefined' || S.filter !== 'all') { return; }
+    menuSpyLastRun = Date.now();
     if (Date.now() < menuSpyPausedUntil) { return; }
     var groups = $$('#menuRows .menu-group');
     if (!groups.length) { return; }
@@ -2046,7 +2014,7 @@ function menuSpyOnScroll() {
     if (!catId) { return; }
     var cur = $('#categories .chip.active');
     if (cur && cur.getAttribute('data-cat') === catId) { return; }
-    paintActiveChip(catId, true);
+    paintActiveChip(catId, 'spy');
   });
 }
 
@@ -2068,11 +2036,6 @@ function scrollToBelowBars(el, withCatsBar) {
   if (!el) { return; }
   var y = el.getBoundingClientRect().top + window.scrollY - barsOffset(withCatsBar);
   window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-}
-
-function setFilter(f) {
-  S.filter = (f === 'all' || catOf(f)) ? f : 'all';
-  renderMenu();
 }
 
 /* ---------- Calculadora de Eventos ---------- */
@@ -2426,21 +2389,18 @@ function handleHash() {
   var m = h.match(/^#(?:\/)?menu\?cat=([\w-]+)/);
   if (!m) { m = h.match(/#cardapio\?cat=([\w-]+)/); }
   if (m && catOf(m[1])) {
-    setFilter(m[1]);
-    var sec = $('#cardapio');
-    if (sec && sec.scrollIntoView) { sec.scrollIntoView(); }
+    var group = $('#menuRows .menu-group[data-group="' + m[1] + '"]');
+    paintActiveChip(m[1], false);
+    if (group) {
+      pauseMenuSpy(1000);
+      scrollToBelowBars(group, true);
+    }
     var hashChip = $('#categories .chip.active');
     if (hashChip) { centerChip(hashChip, 'auto'); }
   }
 }
 
 /* ---------- Eventos (delegação) ---------- */
-
-/* Guarda da rolagem dos chips de categoria: sem isso, cliques seguidos
-   empilhavam smooth-scrolls concorrentes (o de 350ms brigava com o atual)
-   e a página "tremia". */
-var catScrollTimer = null;
-var catScrollGen = 0;
 
 document.addEventListener('click', function (e) {
   var t;
@@ -2524,77 +2484,18 @@ document.addEventListener('click', function (e) {
   t = e.target.closest('[data-account-close]');
   if (t) { closeAccount(); return; }
 
-  t = e.target.closest('[data-filter]');
-  if (t) {
-    setFilter(t.getAttribute('data-filter'));
-    var sec = $('#cardapio');
-    if (sec && sec.scrollIntoView) { sec.scrollIntoView(); }
-    return;
-  }
-
   t = e.target.closest('[data-cat]');
   if (t) {
-    var catFilter = t.getAttribute('data-cat');
-    // Chip já ativo: só centraliza (sem re-render / sem "tremida" vertical).
-    if (catFilter === S.filter) {
-      centerChip(t);
-      return;
+    var catId = t.getAttribute('data-cat');
+    paintActiveChip(catId, false);
+    // Categoria = navegação: rola até o grupo; o cardápio completo segue visível.
+    var group = $('#menuRows .menu-group[data-group="' + catId + '"]');
+    if (group) {
+      pauseMenuSpy(1000);
+      scrollToBelowBars(group, true);
     }
-    // Novo clique invalida a correção pendente do clique anterior.
-    var catGen = ++catScrollGen;
-    if (catScrollTimer) { clearTimeout(catScrollTimer); catScrollTimer = null; }
-    pauseMenuSpy(1000);
-    setFilter(catFilter);
-    var activeChip = $('#categories .chip.active');
-    if (activeChip && activeChip.focus) { try { activeChip.focus({ preventScroll: true }); } catch (eFocus) {} }
-    if (activeChip) {
-      centerChip(activeChip);
-      /* Reforço pós-layout: o renderMenu recria os chips, então o
-         scrollWidth só estabiliza no próximo frame (ex.: "Frutos do Mar"). */
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          var c = $('#categories .chip.active');
-          if (c) { centerChip(c, 'smooth'); }
-        });
-      });
-    }
-    // Categoria fixa no topo + título dos itens logo abaixo da barra
-    // (repete após o layout assentar; sem tocar nos carrosséis)
-    var scrollBarIntoView = function () {
-      var bar = $('#categories');
-      if (!bar) { return; }
-      var headerH = 64;
-      try { headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h'), 10) || 64; }
-      catch (e2) {}
-      var barH = bar.offsetHeight || 56;
-      // Mira no cabeçalho da lista (ou no primeiro item): o título e o
-      // subtítulo devem parar abaixo da barra, mesmo que tenham rolado.
-      var first = document.querySelector('#cardapio .menu-head, #menuRows .menu-group, #menuRows .p-card');
-      var y;
-      if (first) {
-        y = first.getBoundingClientRect().top + window.scrollY - headerH - barH - 12;
-      } else {
-        // 4px = mesmo offset do sticky (.categories top: header + 4px)
-        y = bar.getBoundingClientRect().top + window.scrollY - headerH - 4;
-      }
-      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-    };
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () { if (catGen === catScrollGen) { scrollBarIntoView(); } });
-    });
-    catScrollTimer = setTimeout(function () {
-      catScrollTimer = null;
-      if (catGen !== catScrollGen) { return; }
-      // Só corrige se a barra ainda estiver longe do ponto de fixação
-      // (evita puxar a página caso o cliente já tenha rolado para outro lugar).
-      var bar = $('#categories');
-      if (!bar) { return; }
-      var headerH = 64;
-      try { headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h'), 10) || 64; }
-      catch (e3) {}
-      var y = bar.getBoundingClientRect().top + window.scrollY - headerH - 4;
-      if (Math.abs(y - window.scrollY) > 120) { scrollBarIntoView(); }
-    }, 350);
+    centerChip(t);
+    if (t.focus) { try { t.focus({ preventScroll: true }); } catch (eFocus) {} }
     return;
   }
 
@@ -2606,17 +2507,6 @@ document.addEventListener('click', function (e) {
       var gCard = gtrack.querySelector('.p-card');
       var step = gCard ? gCard.offsetWidth + 14 : Math.round(gtrack.clientWidth * 0.8);
       gtrack.scrollBy({ left: parseInt(t.getAttribute('data-group-scroll'), 10) * step, behavior: 'smooth' });
-    }
-    return;
-  }
-
-  t = e.target.closest('[data-menu-scroll]');
-  if (t) {
-    var track = $('#menuRows');
-    if (track) {
-      var fCard = track.querySelector('.p-card');
-      var step = fCard ? fCard.offsetWidth + 14 : Math.round(track.clientWidth * 0.8);
-      track.scrollBy({ left: parseInt(t.getAttribute('data-menu-scroll'), 10) * step, behavior: 'smooth' });
     }
     return;
   }
@@ -2860,7 +2750,7 @@ document.addEventListener('keydown', function (e) {
 /* ---------- Inicialização ---------- */
 
 document.addEventListener('click', function (e) {
-  var t = e.target.closest('#theme-btn');
+  var t = e.target.closest('#theme-btn, [data-theme-toggle]');
   if (t) { toggleTheme(); }
 });
 
@@ -3236,7 +3126,6 @@ function loadApiCatalog() {
     var cats = c.categories.filter(function (ct) { return has[ct.id]; });
     PRODUCTS = prods;
     if (cats.length) { CATEGORIES = cats; }
-    if (S.filter !== 'all' && !has[S.filter]) { S.filter = 'all'; }
     renderMenu();
   }, function () {});
 }
@@ -3253,9 +3142,6 @@ function init() {
   initHomeLayout();
   refreshCartUI();
   renderMenu();
-  var mtrack = $('#menuRows');
-  if (mtrack) { mtrack.addEventListener('scroll', updateMenuArrows, { passive: true }); }
-  window.addEventListener('resize', updateMenuArrows);
   window.addEventListener('resize', updateGroupArrows);
   window.addEventListener('scroll', menuSpyOnScroll, { passive: true });
   window.addEventListener('hashchange', handleHash);
