@@ -298,6 +298,18 @@ var PRODUCTS = [
     { sizes: [{ id: 'u', label: '130g · 1 porção', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
       { label: 'Leite condensado' }, { label: 'Doce de leite' }, { label: 'Calda de caramelo' } ] }),
 
+  P('romeu-julieta', 'sobremesas', 'Romeu e Julieta', 39.90,
+    'Queijo muçarela e goiabada no molho belga.',
+    'Lasanha Romeu e Julieta com queijo muçarela e goiabada, finalizada com molho belga. Sob encomenda.',
+    { sizes: [{ id: 'u', label: 'Unidade', factor: 1 }], addonGroup: 'doce', tags: ['Sob encomenda'], encomenda: true, ingredients: [
+      { label: 'Muçarela' }, { label: 'Goiabada' }, { label: 'Molho belga' } ] }),
+
+  P('california', 'sobremesas', 'Califórnia', 39.90,
+    'Figo, pêssego e abacaxi no molho belga.',
+    'Lasanha Califórnia com figo, pêssego e abacaxi no molho belga da casa. Sob encomenda.',
+    { sizes: [{ id: 'u', label: 'Unidade', factor: 1 }], addonGroup: 'doce', tags: ['Sob encomenda'], encomenda: true, ingredients: [
+      { label: 'Figo' }, { label: 'Pêssego' }, { label: 'Abacaxi' }, { label: 'Molho belga' } ] }),
+
   /* ==================== Massa Fresca & Molhos (venda avulsa) ==================== */
 
   P('massa-fresca-casa', 'massa-fresca', 'Massa Fresca da Casa', 18.00,

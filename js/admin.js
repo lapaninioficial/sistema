@@ -111,6 +111,10 @@ function postJ(p, d) { return apiRequest('POST', p, d); }
 function putJ(p, d)  { return apiRequest('PUT', p, d); }
 function delJ(p)    { return apiRequest('DELETE', p); }
 
+/* Online = http/https com backend PHP. Em file:// o painel usa os
+   MOCK_* locais (sem persistência); online, lê e grava na API real. */
+function isOnline() { return (typeof location !== 'undefined') && location.protocol !== 'file:'; }
+
 /* =====================================================================
    SECTION 2 — State
    ===================================================================== */
@@ -1607,6 +1611,32 @@ function findAddon(id) {
    ===================================================================== */
 
 function renderCupons() {
+  paintCupons();
+  if (!isOnline()) { return; }
+  getJ('admin/coupons').then(function (rows) {
+    MOCK_COUPONS_DATA = (rows || []).map(normCouponApi);
+    paintCupons();
+  }, function () { /* mantém o cache local */ });
+}
+
+/* Linha da API (code, ctype, cvalue, label, highlight, active, max_uses,
+   used, expires_at) → formato local usado pela tabela. */
+function normCouponApi(r) {
+  r = r || {};
+  return {
+    code: r.code,
+    ctype: r.ctype === 'fixed' ? 'fixed' : 'percent',
+    cvalue: parseFloat(r.cvalue) || 0,
+    label: r.label || '',
+    highlight: !(r.highlight === 0 || r.highlight === '0' || r.highlight === false),
+    active: (r.active === 0 || r.active === '0' || r.active === false) ? false : true,
+    max_uses: (r.max_uses === null || r.max_uses === undefined) ? null : parseInt(r.max_uses, 10),
+    used: parseInt(r.used, 10) || 0,
+    expires_at: r.expires_at || null
+  };
+}
+
+function paintCupons() {
   var toolbar =
     '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
       '<h3 style="font-size:1rem">Cupons de desconto</h3>' +
@@ -1639,6 +1669,33 @@ function renderCupons() {
    ===================================================================== */
 
 function renderAreas() {
+  paintAreas();
+  if (!isOnline()) { return; }
+  getJ('admin/areas').then(function (rows) {
+    MOCK_AREAS_DATA = (rows || []).map(normAreaApi);
+    paintAreas();
+  }, function () { /* mantém o cache local */ });
+}
+
+/* Linha da API (id, name, fee, eta, position, active) → formato local.
+   minOrder/cepRange não têm coluna no banco: preserva o valor local. */
+function normAreaApi(r) {
+  r = r || {};
+  var keep = null;
+  (MOCK_AREAS_DATA || []).forEach(function (a) { if (String(a.id) === String(r.id)) { keep = a; } });
+  return {
+    id: r.id,
+    name: r.name || '',
+    fee: parseFloat(r.fee) || 0,
+    eta: parseInt(r.eta, 10) || 25,
+    position: (r.position === null || r.position === undefined) ? 0 : parseInt(r.position, 10),
+    active: (r.active === 0 || r.active === '0' || r.active === false) ? false : true,
+    minOrder: keep ? (parseFloat(keep.minOrder) || 0) : 0,
+    cepRange: keep ? (keep.cepRange || '') : ''
+  };
+}
+
+function paintAreas() {
   var toolbar =
     '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
       '<h3 style="font-size:1rem">Áreas de entrega</h3>' +
@@ -1676,6 +1733,33 @@ var BANNER_GRADIENTS = [
 ];
 
 function renderBanners() {
+  paintBanners();
+  if (!isOnline()) { return; }
+  getJ('admin/banners').then(function (rows) {
+    MOCK_BANNERS_DATA = (rows || []).map(normBannerApi);
+    paintBanners();
+  }, function () { /* mantém o cache local */ });
+}
+
+/* Linha da API (id, title, subtitle, position, position_order, active) →
+   formato local. period/image não têm coluna no banco: preserva o local. */
+function normBannerApi(r) {
+  r = r || {};
+  var keep = null;
+  (MOCK_BANNERS_DATA || []).forEach(function (b) { if (String(b.id) === String(r.id)) { keep = b; } });
+  return {
+    id: r.id,
+    title: r.title || '',
+    subtitle: r.subtitle || '',
+    position: r.position || 'home-middle',
+    position_order: (r.position_order === null || r.position_order === undefined) ? 0 : parseInt(r.position_order, 10),
+    active: (r.active === 0 || r.active === '0' || r.active === false) ? false : true,
+    period: keep ? (keep.period || '') : '',
+    image: keep ? keep.image : undefined
+  };
+}
+
+function paintBanners() {
   var toolbar =
     '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
       '<h3 style="font-size:1rem">Banners e promoções</h3>' +
@@ -2217,7 +2301,8 @@ function lasanhaModal(lasanha) {
   var catOpts = [
     { v: 'classicos', l: 'Clássicos' }, { v: 'deluxe', l: 'Deluxe' },
     { v: 'especiais', l: 'Especiais' }, { v: 'lowcarb', l: 'Low Carb' },
-    { v: 'doces', l: 'Doces' }, { v: 'sobremesas', l: 'Sobremesas' },
+    { v: 'doces', l: 'Kits Mini' }, { v: 'sobremesas', l: 'Sobremesas' },
+    { v: 'bebidas', l: 'Bebidas' },
     { v: 'selecoes-fechadas', l: 'Seleções Fechadas' },
     { v: 'selecoes-personalizadas', l: 'Seleções Personalizadas' },
     { v: 'frutosdormar', l: 'Frutos do Mar' },
@@ -2736,51 +2821,95 @@ function saveAdicional() {
 function saveCupom() {
   var code = val('cp-code');
   if (!code) { toast('Informe o código'); return; }
-  var data = { ctype: val('cp-type'), cvalue: parseFloat(val('cp-value')) || 0, label: val('cp-label'), max_uses: val('cp-max') ? parseInt(val('cp-max'), 10) : null, expires_at: val('cp-expires') || null, active: true };
   var idEl = $('[data-save-cupom]');
   var id = idEl ? idEl.getAttribute('data-save-cupom') : '';
-  if (id) { var idx = -1; MOCK_COUPONS_DATA.forEach(function (c, i) { if (c.code === id) idx = i; }); if (idx >= 0) { MOCK_COUPONS_DATA[idx] = Object.assign({}, MOCK_COUPONS_DATA[idx], data); MOCK_COUPONS_DATA[idx].code = code.toUpperCase(); } }
-  else { data.code = code.toUpperCase(); data.used = 0; MOCK_COUPONS_DATA.push(data); }
-  closeModal(); toast(id ? 'Cupom atualizado!' : 'Cupom criado!'); renderCupons();
+  if (!isOnline()) {
+    var data = { ctype: val('cp-type'), cvalue: parseFloat(val('cp-value')) || 0, label: val('cp-label'), max_uses: val('cp-max') ? parseInt(val('cp-max'), 10) : null, expires_at: val('cp-expires') || null, active: true };
+    if (id) { var idx = -1; MOCK_COUPONS_DATA.forEach(function (c, i) { if (c.code === id) idx = i; }); if (idx >= 0) { MOCK_COUPONS_DATA[idx] = Object.assign({}, MOCK_COUPONS_DATA[idx], data); MOCK_COUPONS_DATA[idx].code = code.toUpperCase(); } }
+    else { data.code = code.toUpperCase(); data.used = 0; MOCK_COUPONS_DATA.push(data); }
+    closeModal(); toast(id ? 'Cupom atualizado!' : 'Cupom criado!'); renderCupons();
+    return;
+  }
+  var cur = null;
+  MOCK_COUPONS_DATA.forEach(function (c) { if (c.code === id) { cur = c; } });
+  var payload = {
+    code: code.toUpperCase(),
+    ctype: val('cp-type'),
+    value: parseFloat(val('cp-value')) || 0,
+    label: val('cp-label'),
+    highlight: !!(cur && cur.highlight),
+    active: cur ? !!cur.active : true,
+    maxUses: val('cp-max') ? parseInt(val('cp-max'), 10) : null,
+    expiresAt: val('cp-expires') || null
+  };
+  var p = id ? putJ('admin/coupons/' + encodeURIComponent(id), payload) : postJ('admin/coupons', payload);
+  p.then(function () { closeModal(); toast(id ? 'Cupom atualizado!' : 'Cupom criado!'); renderCupons(); })
+   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveArea() {
   var name = val('ar-name');
   if (!name) { toast('Informe o bairro'); return; }
-  var data = { name: name, fee: parseFloat(val('ar-fee')) || 0, eta: parseInt(val('ar-eta'), 10) || 25, minOrder: parseFloat(val('ar-min')) || 0, cepRange: val('ar-cep'), active: true };
   var idEl = $('[data-save-area]');
   var id = idEl ? idEl.getAttribute('data-save-area') : '';
-  if (id) { var idx = -1; MOCK_AREAS_DATA.forEach(function (a, i) { if (a.id === id) idx = i; }); if (idx >= 0) { MOCK_AREAS_DATA[idx] = Object.assign({}, MOCK_AREAS_DATA[idx], data); } }
-  else { data.id = 'ar-' + Date.now(); data.position = MOCK_AREAS_DATA.length + 1; MOCK_AREAS_DATA.push(data); }
-  closeModal(); toast(id ? 'Área atualizada!' : 'Área criada!'); renderAreas();
+  if (!isOnline()) {
+    var data = { name: name, fee: parseFloat(val('ar-fee')) || 0, eta: parseInt(val('ar-eta'), 10) || 25, minOrder: parseFloat(val('ar-min')) || 0, cepRange: val('ar-cep'), active: true };
+    if (id) { var idx = -1; MOCK_AREAS_DATA.forEach(function (a, i) { if (a.id === id) idx = i; }); if (idx >= 0) { MOCK_AREAS_DATA[idx] = Object.assign({}, MOCK_AREAS_DATA[idx], data); } }
+    else { data.id = 'ar-' + Date.now(); data.position = MOCK_AREAS_DATA.length + 1; MOCK_AREAS_DATA.push(data); }
+    closeModal(); toast(id ? 'Área atualizada!' : 'Área criada!'); renderAreas();
+    return;
+  }
+  var cur = null;
+  MOCK_AREAS_DATA.forEach(function (a) { if (String(a.id) === String(id)) { cur = a; } });
+  var payload = {
+    name: name,
+    fee: parseFloat(val('ar-fee')) || 0,
+    eta: parseInt(val('ar-eta'), 10) || 25,
+    position: cur ? (cur.position || 0) : (MOCK_AREAS_DATA.length + 1),
+    active: cur ? !!cur.active : true
+  };
+  var p = id ? putJ('admin/areas/' + encodeURIComponent(id), payload) : postJ('admin/areas', payload);
+  p.then(function () { closeModal(); toast(id ? 'Área atualizada!' : 'Área criada!'); renderAreas(); })
+   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveBanner() {
   var title = val('bn-title');
   if (!title) { toast('Informe o título'); return; }
-  var data = { title: title, subtitle: val('bn-subtitle'), position: val('bn-position'), period: val('bn-period'), active: true };
   var idEl = $('[data-save-banner]');
   var id = idEl ? idEl.getAttribute('data-save-banner') : '';
-
   var imgInput = $('#f-bn-image');
 
-  function applyAndClose() {
-    if (id) { var idx = -1; MOCK_BANNERS_DATA.forEach(function (b, i) { if (String(b.id) === String(id)) idx = i; }); if (idx >= 0) { MOCK_BANNERS_DATA[idx] = Object.assign({}, MOCK_BANNERS_DATA[idx], data); } }
-    else { data.id = Date.now(); data.position_order = MOCK_BANNERS_DATA.length + 1; MOCK_BANNERS_DATA.push(data); }
-    closeModal(); toast(id ? 'Banner atualizado!' : 'Banner criado!'); renderBanners();
+  if (!isOnline()) {
+    var data = { title: title, subtitle: val('bn-subtitle'), position: val('bn-position'), period: val('bn-period'), active: true };
+    function applyAndClose() {
+      if (id) { var idx = -1; MOCK_BANNERS_DATA.forEach(function (b, i) { if (String(b.id) === String(id)) idx = i; }); if (idx >= 0) { MOCK_BANNERS_DATA[idx] = Object.assign({}, MOCK_BANNERS_DATA[idx], data); } }
+      else { data.id = Date.now(); data.position_order = MOCK_BANNERS_DATA.length + 1; MOCK_BANNERS_DATA.push(data); }
+      closeModal(); toast(id ? 'Banner atualizado!' : 'Banner criado!'); renderBanners();
+    }
+    if (imgInput && imgInput.files && imgInput.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function (e) { data.image = e.target.result; applyAndClose(); };
+      reader.readAsDataURL(imgInput.files[0]);
+    } else {
+      applyAndClose();
+    }
+    return;
   }
-
-  var pending = 0;
-  function done() { if (pending <= 0) applyAndClose(); }
-
-  if (imgInput && imgInput.files && imgInput.files[0]) {
-    pending++;
-    var reader = new FileReader();
-    reader.onload = function (e) { data.image = e.target.result; pending--; done(); };
-    reader.readAsDataURL(imgInput.files[0]);
-  }
-
-  done();
+  /* Online: period/image não têm coluna no banco e não persistem;
+     title/subtitle/position/active vão para a API. */
+  var cur = null;
+  MOCK_BANNERS_DATA.forEach(function (b) { if (String(b.id) === String(id)) { cur = b; } });
+  var payload = {
+    title: title,
+    subtitle: val('bn-subtitle'),
+    position: val('bn-position') || 'home-middle',
+    active: cur ? !!cur.active : true,
+    positionOrder: cur ? (cur.position_order || 0) : (MOCK_BANNERS_DATA.length + 1)
+  };
+  var p = id ? putJ('admin/banners/' + encodeURIComponent(id), payload) : postJ('admin/banners', payload);
+  p.then(function () { closeModal(); toast(id ? 'Banner atualizado!' : 'Banner criado!'); renderBanners(); })
+   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveConfig() {
@@ -2904,9 +3033,40 @@ function deleteAdicional(id) {
     .then(function () { toast('Excluído'); renderAdicionais(); })
     .catch(function (e) { toast(e.message, true); });
 }
-function deleteCupom(id) { if (!window.confirm('Excluir este cupom?')) return; MOCK_COUPONS_DATA = MOCK_COUPONS_DATA.filter(function (c) { return c.code !== id; }); toast('Excluído'); renderCupons(); }
-function deleteArea(id) { if (!window.confirm('Excluir esta área?')) return; MOCK_AREAS_DATA = MOCK_AREAS_DATA.filter(function (a) { return a.id !== id; }); toast('Excluído'); renderAreas(); }
-function deleteBanner(id) { if (!window.confirm('Excluir este banner?')) return; MOCK_BANNERS_DATA = MOCK_BANNERS_DATA.filter(function (b) { return String(b.id) !== String(id); }); toast('Excluído'); renderBanners(); }
+function deleteCupom(id) {
+  if (!window.confirm('Excluir este cupom?')) return;
+  if (!isOnline()) { MOCK_COUPONS_DATA = MOCK_COUPONS_DATA.filter(function (c) { return c.code !== id; }); toast('Excluído'); renderCupons(); return; }
+  delJ('admin/coupons/' + encodeURIComponent(id)).then(function () { toast('Excluído'); renderCupons(); })
+   .catch(function (e) {
+     if (e && e.status === 409) {
+       if (window.confirm('Cupom já usado em pedidos — apenas desativar?')) {
+         putJ('admin/coupons/' + encodeURIComponent(id), { active: false }).then(function () { toast('Cupom desativado.'); renderCupons(); }, function (e2) { toast(e2.message, true); });
+       }
+       return;
+     }
+     toast(e.message, true);
+   });
+}
+function deleteArea(id) {
+  if (!window.confirm('Excluir esta área?')) return;
+  if (!isOnline()) { MOCK_AREAS_DATA = MOCK_AREAS_DATA.filter(function (a) { return a.id !== id; }); toast('Excluído'); renderAreas(); return; }
+  delJ('admin/areas/' + encodeURIComponent(id)).then(function () { toast('Excluída'); renderAreas(); })
+   .catch(function (e) {
+     if (e && e.status === 409) {
+       if (window.confirm('Área usada em pedidos — apenas desativar?')) {
+         putJ('admin/areas/' + encodeURIComponent(id), { active: false }).then(function () { toast('Área desativada.'); renderAreas(); }, function (e2) { toast(e2.message, true); });
+       }
+       return;
+     }
+     toast(e.message, true);
+   });
+}
+function deleteBanner(id) {
+  if (!window.confirm('Excluir este banner?')) return;
+  if (!isOnline()) { MOCK_BANNERS_DATA = MOCK_BANNERS_DATA.filter(function (b) { return String(b.id) !== String(id); }); toast('Excluído'); renderBanners(); return; }
+  delJ('admin/banners/' + encodeURIComponent(id)).then(function () { toast('Excluído'); renderBanners(); })
+   .catch(function (e) { toast(e.message, true); });
+}
 
 function duplicateLasanha(id, btn) {
   var orig = findLasanha(id);
