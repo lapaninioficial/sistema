@@ -37,7 +37,16 @@ lapanini/
    `sql/03-selection-1500.sql` (preços 1,5kg + pool da Seleção Generosa),
    `sql/04-addons-cardapio.sql` (adicionais Borda/Molhos/Extras/Retirar do cardápio) e
    `sql/06-addons-required.sql` (coluna "obrigatório" dos adicionais) e
-   `sql/07-produto-nomes.sql` (ajustes de nome, ex.: Torta Alfajor na Fatia).
+    `sql/07-produto-nomes.sql` (ajustes de nome, ex.: Torta Alfajor na Fatia).
+    Em seguida, NESTA ORDEM: `sql/10-sellers.sql` →
+    `sql/11-sellers-commission.sql` → `sql/12-seller-rate.sql` (vendedores e
+    comissão), `sql/13-cancel-orders.sql` → `sql/14-cancel-history.sql`
+    (cancelamento com histórico), `sql/21-corrige-categorias.sql`
+    (Romeu e Julieta/Califórnia → Sobremesas), `sql/22-2fa-totp.sql` (2FA),
+    `sql/23-lgpd.sql` (consentimentos LGPD) e `sql/24-kits-mini.sql`
+    (renomeia `doces` para Kits Mini em bases antigas).
+    Os dumps `lapanini.sql`/`lapanini-hostgator.sql` são o snapshot base —
+    os incrementais acima são obrigatórios numa instalação nova.
    Para o financeiro: `sql/migration_financial_safe.sql`,
    `sql/migration_financial_v2_isficha.sql` e por fim
    `sql/seed_fichas_tecnicas.sql` (24 insumos + fichas dos 34 produtos `reg`).

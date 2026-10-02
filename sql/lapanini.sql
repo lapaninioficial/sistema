@@ -57,7 +57,7 @@ INSERT INTO categories (id, name, short, kicker, position) VALUES
 ('especiais',               'Lasanhas Sabores Especiais',  'Especiais',            'Nossos sabores especiais',                                        5),
 ('lowcarb',                 'Lasanhas Low Carb',           'Low Carb',             'Nossos sabores low carb',                                         6),
 ('frutosdormar',            'Frutos do Mar',               'Frutos do Mar',        'Lasanhas de frutos do mar',                                       7),
-('doces',                   'Kits Mini para Eventos',      'Kits Mini',            'Lasanhas individuais para eventos — calcule pela quantidade de convidados', 8),
+('doces',                   'Kits Mini',                   'Kits Mini',            'Lasanhas individuais para eventos — calcule pela quantidade de convidados', 8),
 ('sobremesas',              'Sobremesas Variadas',         'Sobremesas',           'Para adoçar depois da mesa',                                     9),
 ('bebidas',                 'Escolha sua bebida',          'Bebidas',              'Bebidas para acompanhar sua lasanha',                             10);
 

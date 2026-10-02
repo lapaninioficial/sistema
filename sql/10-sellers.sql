@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS sellers (
 
 -- Vendedor inicial (número atual da loja). Edite pelo painel em Vendedores.
 INSERT INTO sellers (name, phone, photo, active, position)
-SELECT 'Atendimento Lapanini', '5519994048354', NULL, 1, 0
+SELECT 'Atendimento La Panini', '5519994048354', NULL, 1, 0
 WHERE NOT EXISTS (SELECT 1 FROM sellers);

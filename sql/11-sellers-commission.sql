@@ -14,8 +14,8 @@ ALTER TABLE orders
 
 -- 2) Seeds dos 5 vendedores (nomes/números editáveis pelo painel em Vendedores).
 --    Se a tabela estiver vazia: cria Vendedor 1..5 com o telefone atual da loja.
---    Se já existir só o seed antigo ("Atendimento Lapanini"): renomeia para
---    Vendedor 1 e cria os 4 restantes. Se o usuário já cadastrou os seus, não mexe.
+--    Se a tabela tiver somente o vendedor padrão da instalação inicial:
+--    renomeia para Vendedor 1 e cria os 4 restantes. Se o usuário já cadastrou os seus, não mexe.
 
 INSERT INTO sellers (name, phone, photo, active, position)
 SELECT 'Vendedor 1', '5519994048354', NULL, 1, 1
@@ -24,7 +24,7 @@ WHERE (SELECT c FROM (SELECT COUNT(*) AS c FROM sellers) t) = 0;
 UPDATE sellers s
 JOIN (SELECT COUNT(*) AS c FROM sellers) t ON t.c <= 1
 SET s.name = 'Vendedor 1', s.position = 1
-WHERE s.name = 'Atendimento Lapanini';
+WHERE s.name IN ('Atendimento La Panini', 'Atendimento Lapanini');
 
 INSERT INTO sellers (name, phone, photo, active, position)
 SELECT t.name, '5519994048354', NULL, 1, t.pos
