@@ -282,7 +282,7 @@ ul, ol {
 }
 
 .brand-logo img {
-  width: 80px;
+  width: 140px;
   height: auto;
 }
 
@@ -2636,8 +2636,8 @@ table.tbl {
 
 .login__brand {
   display: block;
-  width: 180px;
-  max-width: 70%;
+  width: 240px;
+  max-width: 80%;
   height: auto;
   margin: 0 auto 1rem;
 }
