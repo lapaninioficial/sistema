@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60">
-  <text x="20" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="32" font-style="italic" fill="#F5EBE0">Pudim</text>
-  <text x="118" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="19" letter-spacing="3" fill="#C19A6B">LAPANINI</text>
+  <text x="150" y="41" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34">
+    <tspan font-style="italic" fill="#F5EBE0">Pudim </tspan><tspan font-size="21" letter-spacing="2" fill="#C19A6B">LAPANINI</tspan>
+  </text>
 </svg>
