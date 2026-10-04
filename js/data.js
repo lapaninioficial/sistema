@@ -41,12 +41,13 @@ var DELIVERY = {
 /* ---------- Cupons ---------- */
 
 var COUPONS = [
-  { code: 'LAPANINI10', type: 'percent', value: 10, label: '10% OFF' }
+  { code: 'PUDIMHASS10', type: 'percent', value: 10, label: '10% OFF' }
 ];
 
 /* ---------- Categorias (oficiais da marca) ---------- */
 
 var CATEGORIES = [
+  { id: 'pudins',                   name: 'Pudins Artesanais',             short: 'Pudins',               kicker: 'Cremosos, gelados e feitos todos os dias' },
   { id: 'selecoes-fechadas',       name: 'Seleções Especiais Fechadas', short: 'Seleções Fechadas',     kicker: 'Combinações pensadas para servir com equilíbrio e praticidade' },
   { id: 'selecoes-personalizadas', name: 'Seleções Personalizadas',     short: 'Personalizadas',       kicker: 'Monte sua seleção escolhendo os sabores que preferir.' },
   { id: 'classicos',               name: 'Lasanhas Sabores Clássicos',  short: 'Clássicos',            kicker: 'Nossos sabores clássicos, feitos com massa fresca todos os dias' },
@@ -56,6 +57,9 @@ var CATEGORIES = [
   { id: 'frutosdormar',            name: 'Frutos do Mar',               short: 'Frutos do Mar',        kicker: 'Lasanhas de frutos do mar' },
   { id: 'doces',                   name: 'Kits Mini',                short: 'Kits Mini',              kicker: 'Lasanhas individuais para eventos — calcule pela quantidade de convidados' },
   { id: 'sobremesas',              name: 'Sobremesas Variadas',         short: 'Sobremesas',           kicker: 'Para adoçar depois da mesa' },
+  { id: 'mais-pedidos',            name: 'Os Mais Pedidos',             short: 'Mais Pedidos',         kicker: 'Os queridinhos da casa' },
+  { id: 'promocao-do-dia',         name: 'Promoção do Dia!',            short: 'Promoção',             kicker: 'Ofertas por tempo limitado' },
+  { id: 'top-mais-vendidos',       name: 'Top Mais Vendidos!',          short: 'Top Vendidos',         kicker: 'Os campeões de venda' },
   { id: 'massa-fresca',             name: 'Massa Fresca da Casa',        short: 'Massa Fresca',         kicker: 'Massa fresca artesanal, feita na casa' },
   { id: 'molhos-caseiros',          name: 'Molhos Caseiros',             short: 'Molhos',               kicker: 'Molhos artesanais feitos na casa, por litro' },
   { id: 'bebidas',                 name: 'Escolha sua bebida',          short: 'Bebidas',              kicker: 'Bebidas para acompanhar sua lasanha' }

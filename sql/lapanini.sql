@@ -665,7 +665,7 @@ CREATE TABLE coupons (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO coupons (code, ctype, cvalue, label, highlight, active) VALUES
-('LAPANINI10','percent',10,'10% OFF',1,1),
+('PUDIMHASS10','percent',10,'10% OFF',1,1),
 ('BEMVINDO15','percent',15,'15% OFF',0,0);
 
 -- ============================================================================
@@ -781,8 +781,8 @@ INSERT INTO settings (k, v) VALUES
 ('hours_detail',   'Terça a domingo, das 18h às 23h30. Segunda-feira a cozinha descansa.'),
 ('eta',            '45–60 min'),
 ('free_from',      '5.90'),
-('offer_text',     'Oferta da Brasa: 10% OFF com LAPANINI10'),
-('offer_copy',     'LAPANINI10'),
+('offer_text',     'Oferta da Brasa: 10% OFF com PUDIMHASS10'),
+('offer_copy',     'PUDIMHASS10'),
 ('hero_kicker',    'Artesanal · congelada na hora · pronta para assar'),
 ('hero_title',     'Sabor <span style="white-space:nowrap">que conquista,</span><br> <em>entrega que encanta</em>'),
 ('hero_tagline',   'Artesanais, ingredientes de verdade e aquele sabor de brasa entregue na sua porta.'),

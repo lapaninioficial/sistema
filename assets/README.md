@@ -6,9 +6,9 @@ PHP/MySQL carregará as fotos, o logo e os textos do servidor/banco.
 
 ## Estrutura
 
-- `img/favicon.svg` — ícone da aba do navegador (monograma "LP" provisório).
-- `img/hero.webp` — **logo oficial da La Panini**; usada no cabeçalho
-  (`.brand__img`) e na coluna de imagem do hero.
+- `img/favicon.svg` — ícone da aba do navegador (pudim dourado).
+- `img/logo-pudim-hass.svg` — **logo oficial Pudim Hass**; usada no cabeçalho
+  (`.brand__img`), rodapé e sidebar do painel.
 - `img/<id-do-produto>.jpg` — **fotos reais dos produtos** (a adicionar).
 
 ## Logo

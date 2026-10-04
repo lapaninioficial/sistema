@@ -23,6 +23,18 @@ function uid() {
   return 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+/* Cardápio só de pudins: esconde lasanhas e demais categorias da vitrine.
+   true = vitrine mostra apenas o "Menu de Pudins". */
+var PUDIM_ONLY = true;
+
+/* Forçar loja aberta (pedido do dono): ignora horários e pausa do painel.
+   Para voltar ao automático, mude para false. */
+var FORCAR_ABERTO = true;
+
+function isPudimProduct(p) {
+  return !!(p && p.id && String(p.id).indexOf('pudim') === 0);
+}
+
 var storage = (function () {
   var mem = {};
   var ok = (function () {
@@ -70,6 +82,7 @@ var STORE_STATUS = { open: true, paused: false, delivery: true, pickup: true,
   hours: { mon: { on: false, open: '18:00', close: '23:30' }, seg: { open: '18:00', close: '23:30' }, sab: { open: '18:00', close: '23:30' }, dom: { open: '18:00', close: '23:30' } } };
 
 function storeClosed() {
+  if (typeof FORCAR_ABERTO !== 'undefined' && FORCAR_ABERTO) { return false; }
   return !STORE_STATUS.open || !!STORE_STATUS.paused;
 }
 
@@ -138,7 +151,7 @@ function legacyCopy(text) {
 }
 
 function copyCoupon(code) {
-  var done = function () { toast('Cupom ' + code + ' copiado!'); };
+  var done = function () { toast('Cupom ' + code + ' copiado!', 'success'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(code).then(done, function () { legacyCopy(code); done(); });
   } else {
@@ -168,6 +181,7 @@ function hoursForToday() {
 }
 
 function isOpenNow() {
+  if (typeof FORCAR_ABERTO !== 'undefined' && FORCAR_ABERTO) { return true; }
   var d = new Date();
   var r = hoursForToday();
   if (d.getDay() === 1 && !r.on) { return false; }
@@ -175,6 +189,13 @@ function isOpenNow() {
   var h = d.getHours() + d.getMinutes() / 60;
   if (c <= o) { return h >= o || h < c; }
   return h >= o && h < c;
+}
+
+/* Tempo de entrega exibido no selo "Aberto · …": editável no painel
+   (Configurações → Entrega e retirada); cai para o padrão sem API. */
+function storeEta() {
+  var e = (typeof BRAND !== 'undefined' && BRAND && BRAND.eta) ? String(BRAND.eta).trim() : '';
+  return e || '45–60 min';
 }
 
 function setStatus() {
@@ -188,9 +209,10 @@ function setStatus() {
     return;
   }
   if (isOpenNow()) {
-    txt.innerHTML = 'Aberto <small>· 45–60 min</small>';
+    var eta = storeEta();
+    txt.innerHTML = 'Aberto <small>· ' + esc(eta) + '</small>';
     el.classList.remove('is-closed');
-    el.setAttribute('aria-label', 'Aberto agora, entrega em 45 a 60 minutos');
+    el.setAttribute('aria-label', 'Aberto agora, entrega em ' + eta.replace(/[–—-]/g, ' a '));
   } else {
     var isMon = new Date().getDay() === 1;
     var rToday = hoursForToday();
@@ -204,9 +226,10 @@ function setStatus() {
 /* ---------- Toast ---------- */
 
 var toastTimer = null;
-function toast(msg) {
+function toast(msg, type) {
   var el = $('#toast');
   el.innerHTML = esc(msg);
+  el.classList.toggle('toast--success', type === 'success');
   el.classList.add('is-show');
   if (toastTimer) { clearTimeout(toastTimer); }
   toastTimer = setTimeout(function () { el.classList.remove('is-show'); }, 3200);
@@ -264,8 +287,8 @@ function closeModal() {
 /* ---------- Modal de produto ---------- */
 
 function crossSellHtml(currentCat) {
-  var bebidas = PRODUCTS.filter(function (p) { return p.cat === 'bebidas'; });
-  var sobremesas = PRODUCTS.filter(function (p) { return p.cat === 'sobremesas'; });
+  var bebidas = PUDIM_ONLY ? [] : PRODUCTS.filter(function (p) { return p.cat === 'bebidas'; });
+  var sobremesas = PUDIM_ONLY ? PRODUCTS.filter(isPudimProduct) : PRODUCTS.filter(function (p) { return p.cat === 'sobremesas'; });
   if (!bebidas.length && !sobremesas.length) { return ''; }
 
   var picks = (S._modalState && S._modalState.xs) || {};
@@ -301,7 +324,7 @@ function crossSellHtml(currentCat) {
   }
   if (sobremesas.length) {
     html += '<div class="cross-sell__section">' +
-      '<div class="cross-sell__title">Sobremesas <small class="cross-sell__opt">Opcional</small></div>' +
+      '<div class="cross-sell__title">' + (PUDIM_ONLY ? 'Pudins' : 'Sobremesas') + ' <small class="cross-sell__opt">Opcional</small></div>' +
       '<div class="cross-sell__list">' + sobremesas.map(listItem).join('') + '</div></div>';
   }
   html += '</div>';
@@ -914,7 +937,7 @@ function xsQuickAdd(pid) {
   var xsize = xsSizeOf(xp);
   addToCart(xp, { size: xsize, qty: q, addons: [], removed: [], sizeLabel: sizeLabelShort(xsize) });
   if (st.xs) { delete st.xs[pid]; }
-  toast(q + 'x ' + xp.name + ' adicionado(a) à sacola.');
+  toast(q + 'x ' + xp.name + ' adicionado(a) à sacola.', 'success');
   bumpCartBadge();
   if (st.product.type === 'selection') { updateSelectionModal(); }
   else { updateProductModal(); }
@@ -950,7 +973,7 @@ function modalAdd() {
     addToCart(p, { size: size, qty: qty, addons: addons, removed: removed, obs: (st.obs || '').trim(), sizeLabel: sizeLabelShort(size), baked: !!st.baked });
   }
   var xsAdded = xsAddPicks(st);
-  toast(p.name + ' adicionado(a)' + (xsAdded > 0 ? ' + ' + xsAdded + ' extra(s)' : '') + '.');
+  toast(p.name + ' adicionado(a)' + (xsAdded > 0 ? ' + ' + xsAdded + ' extra(s)' : '') + '.', 'success');
   closeModal();
   openDrawer();
 }
@@ -1110,7 +1133,7 @@ function modalAddSelection() {
   if (count < p.min) { toast('Escolha pelo menos ' + p.min + ' unidades.'); return; }
   addToCart(p, { picks: st.picks });
   var xsAdded = xsAddPicks(st);
-  toast(p.name + ' adicionada' + (xsAdded > 0 ? ' + ' + xsAdded + ' extra(s)' : '') + '.');
+  toast(p.name + ' adicionada' + (xsAdded > 0 ? ' + ' + xsAdded + ' extra(s)' : '') + '.', 'success');
   closeModal();
   openDrawer();
 }
@@ -1306,7 +1329,7 @@ function quickSignin(name) {
   storage.set('lapanini_account', S.account);
   if (!S.checkout.data.name && name) { S.checkout.data.name = nm; }
   if (!S.checkout.data.email) { S.checkout.data.email = email; }
-  toast(name ? 'Conta criada. Bem-vindo(a)!' : 'Bem-vindo(a) de volta!');
+  toast(name ? 'Conta criada. Bem-vindo(a)!' : 'Bem-vindo(a) de volta!', 'success');
   refreshCartUI();
 }
 
@@ -1449,7 +1472,7 @@ function step1Html() {
     '<div class="card"><h3>Cupom</h3>' +
     '<div class="coupon-field">' +
       '<div class="coupon-field__row">' +
-        '<input class="field__input" id="coupon-input" type="text" maxlength="20" autocomplete="off" placeholder="Cupom (ex.: LAPANINI10)" value="' + esc(S.cart.coupon || '') + '">' +
+        '<input class="field__input" id="coupon-input" type="text" maxlength="20" autocomplete="off" placeholder="Cupom (ex.: PUDIMHASS10)" value="' + esc(S.cart.coupon || '') + '">' +
         '<button class="btn btn--primary" id="coupon-apply" type="button">Aplicar cupom</button>' +
       '</div>' +
       '<p class="coupon-msg" id="coupon-msg" role="status"></p>' +
@@ -1745,6 +1768,11 @@ function showConfirmation(order, seller, waUrl) {
 /* Só exibe na barra as categorias que têm ao menos 1 produto visível:
    categoria com tudo desativado (active=0) some da vitrine. */
 function visibleCategories() {
+  if (PUDIM_ONLY) {
+    return CATEGORIES.filter(function (c) {
+      return PRODUCTS.some(function (p) { return p.cat === c.id && isPudimProduct(p); });
+    });
+  }
   return CATEGORIES.filter(function (c) {
     return PRODUCTS.some(function (p) { return p.cat === c.id; });
   });
@@ -1762,6 +1790,19 @@ function renderCategories() {
 /* Cardápio sempre agrupado por categoria, cada uma em seu próprio carrossel.
    As categorias da barra são navegação (rolam até o grupo), não filtro. */
 function gridGrouped() {
+  if (PUDIM_ONLY) {
+    return CATEGORIES.map(function (c) {
+      var pudins = PRODUCTS.filter(function (p) { return p.cat === c.id && isPudimProduct(p); });
+      if (!pudins.length) { return ''; }
+      return '<section class="menu-group" data-group="' + c.id + '">' +
+        (c.kicker ? '<p class="menu-group__kicker">' + esc(c.kicker) + '</p>' : '') +
+        '<h3 class="menu-group__title">' + esc(c.name) + '</h3>' +
+        '<div class="menu-carousel"><div class="menu-track menu-group__track">' + pudins.map(card).join('') + '</div>' +
+        '<button class="menu-arrow menu-arrow--prev" type="button" data-group-scroll="-1" aria-label="Anterior em ' + esc(c.short) + '">‹</button>' +
+        '<button class="menu-arrow menu-arrow--next" type="button" data-group-scroll="1" aria-label="Próximo em ' + esc(c.short) + '">›</button></div>' +
+      '</section>';
+    }).join('');
+  }
   return CATEGORIES.map(function (c) {
     var list = PRODUCTS.filter(function (p) { return p.cat === c.id; });
     if (!list.length) { return ''; }
@@ -2346,7 +2387,7 @@ function doAccountLogin() {
   storage.set('lapanini_account', S.account);
   S.accountMode = 'login';
   try { storage.set('lapanini_account_mode', 'login'); } catch (e2) {}
-  toast('Bem-vindo(a) de volta!');
+  toast('Bem-vindo(a) de volta!', 'success');
   renderAccount();
 }
 
@@ -2363,7 +2404,7 @@ function doAccountRegister() {
   storage.set('lapanini_account', S.account);
   S.accountMode = 'login';
   try { storage.set('lapanini_account_mode', 'login'); } catch (e2) {}
-  toast('Conta criada. Bem-vindo(a)!');
+  toast('Conta criada. Bem-vindo(a)!', 'success');
   renderAccount();
 }
 
@@ -2849,6 +2890,7 @@ function initHomeLayout() {
         if (typeof s.brand.payCard !== 'undefined') { STORE_STATUS.payCard = !!s.brand.payCard; }
         if (typeof s.brand.payCash !== 'undefined') { STORE_STATUS.payCash = !!s.brand.payCash; }
         if (isFinite(parseFloat(s.brand.minDelivery))) { STORE_STATUS.minDelivery = Math.max(0, parseFloat(s.brand.minDelivery)); }
+        if (typeof s.brand.eta === 'string' && s.brand.eta.trim()) { BRAND.eta = s.brand.eta.trim(); }
         if (typeof s.brand.whatsOnly !== 'undefined') { STORE_STATUS.whatsOnly = !!s.brand.whatsOnly; }
         if (s.brand.payMode === 'local' || s.brand.payMode === 'online') { STORE_STATUS.payMode = s.brand.payMode; }
         var H = STORE_STATUS.hours;
@@ -2883,9 +2925,10 @@ function applyHomeTexts(c) {
     }
   }
   setSel('[data-offer-text]', c.offer_text, true);
-  setSel('[data-hero-kicker]', c.hero_kicker, false);
+  setSel('[data-hero-kicker]', c.hero_kicker, true);
   setSel('[data-hero-title]', c.hero_title, true);
   setSel('[data-hero-tagline]', c.hero_tagline, false);
+  styleBrandWords();
   setSel('[data-promo-kicker]', c.promo_kicker, false);
   setSel('[data-promo-title]', c.promo_title, true);
   setSel('[data-promo-name]', c.promo_name, false);
@@ -2920,6 +2963,19 @@ function applyHomeTexts(c) {
   }
   applyHomeStyles(c);
   try { storage.set('lapanini_home_content', c); } catch (e) {}
+}
+
+/* Nome da marca no texto com a fonte da logo (Pudim itálico + LAPANINI espaçado).
+   Roda sobre o HTML estático e após o conteúdo da API. */
+function styleBrandWords() {
+  var els = document.querySelectorAll('[data-hero-tagline]');
+  for (var i = 0; i < els.length; i++) {
+    if (els[i].querySelector('.logo-word')) { continue; }
+    var t = els[i].textContent || '';
+    if (t.indexOf('Pudim Hass') === -1) { continue; }
+    els[i].innerHTML = esc(t).replace(/Pudim Hass/g,
+      '<span class="logo-word"><span class="logo-word__p">Pudim</span> <span class="logo-word__h">LAPANINI</span></span>');
+  }
 }
 
 /* Cor + tamanho dos textos por seção (Admin → Home/Seções → Editar). */
@@ -3120,6 +3176,20 @@ function loadApiCatalog() {
       if (!p.comp && p.components) { p.comp = p.components; }
       return p;
     });
+    if (PUDIM_ONLY) {
+      prods = prods.filter(function (p) {
+        var pid = p.id || '';
+        return String(pid).indexOf('pudim') === 0;
+      });
+      if (!prods.length) { return; }
+      var hasP = {};
+      prods.forEach(function (p) { hasP[p.cat] = true; });
+      var pudimCats = (c.categories || []).filter(function (ct) { return hasP[ct.id]; });
+      PRODUCTS = prods;
+      if (pudimCats.length) { CATEGORIES = pudimCats; }
+      renderMenu();
+      return;
+    }
     if (!prods.length) { return; }
     var has = {};
     prods.forEach(function (p) { has[p.cat] = true; });
@@ -3142,6 +3212,7 @@ function init() {
   initHomeLayout();
   refreshCartUI();
   renderMenu();
+  styleBrandWords();
   window.addEventListener('resize', updateGroupArrows);
   window.addEventListener('scroll', menuSpyOnScroll, { passive: true });
   window.addEventListener('hashchange', handleHash);

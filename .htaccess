@@ -10,6 +10,9 @@ Options -Indexes
   RewriteCond %{HTTP_HOST} ^agencia\.staffecommerce\.com\.br$ [NC]
   RewriteCond %{HTTPS} off
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  RewriteCond %{HTTP_HOST} ^pudim\.lapanini\.com\.br$ [NC]
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
   RewriteCond %{HTTP_HOST} ^lapanini\.com\.br$ [NC]
   RewriteRule ^ https://www.lapanini.com.br%{REQUEST_URI} [R=301,L]
   RewriteCond %{HTTP_HOST} ^www\.lapanini\.com\.br$ [NC]

@@ -13,6 +13,7 @@ yarn.lock
 .env.*
 !.env.example
 app/config.local.php
+app/config.php
 *.log
 
 # Uploads gerados no servidor (recriados em produção)

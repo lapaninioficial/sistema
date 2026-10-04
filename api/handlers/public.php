@@ -45,6 +45,7 @@ function api_public_register(Router $r): void
 
     $r->post('/auth/login', function () {
         $d   = body();
+        turnstile_check_body($d, 'login');
         $u   = try_login((string)pick($d, 'email', ''), (string)pick($d, 'password', ''));
         if (!$u) {
             err('E-mail ou senha inválidos.', 401);
@@ -54,6 +55,7 @@ function api_public_register(Router $r): void
 
     $r->post('/auth/verify-2fa', function () {
         $d = body();
+        turnstile_check_body($d, 'verify-2fa');
         $u = verify_totp_login((string)pick($d, 'code', ''));
         if (!$u) {
             err('Código inválido ou expirado.', 401);

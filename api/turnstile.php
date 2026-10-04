@@ -85,3 +85,23 @@ function turnstile_guard(string $path, string $method): void
         err('Segurança: validação do Turnstile falhou. Recarregue e tente de novo.', 403);
     }
 }
+
+/**
+ * Verificação pontual fora do guard (ex.: login, que não está sob /admin/).
+ * Sem widget (cf_present ausente) ou sem secret: transição, só registra.
+ */
+function turnstile_check_body(array $d, string $action): void
+{
+    if (empty($d['cf_present'])) {
+        error_log('La Panini Turnstile: ' . $action . ' sem widget (transição).');
+        return;
+    }
+    $secret = defined('TURNSTILE_SECRET_KEY') ? (string)TURNSTILE_SECRET_KEY : '';
+    if ($secret === '') {
+        error_log('La Panini Turnstile: SECRET vazia; ' . $action . ' liberado em transição.');
+        return;
+    }
+    if (!turnstile_verify((string)($d['cf_turnstile_token'] ?? ''))) {
+        err('Segurança: validação do Turnstile falhou. Resolva o desafio e tente de novo.', 403);
+    }
+}

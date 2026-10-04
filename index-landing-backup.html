@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="La Panini — Lasanhas artesanais congeladas e prontas para assar. Do freezer ao forno em minutos, em Campinas.">
+  <meta name="theme-color" content="#0D0B0A">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preload" as="image" href="assets/img/produto-generico.svg" type="image/svg+xml" fetchpriority="high">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="La Panini — Lasanhas Artesanais em Campinas">
+  <meta property="og:description" content="Lasanhas artesanais congeladas e prontas para assar. Do freezer ao forno em minutos, em Campinas.">
+  <meta property="og:image" content="assets/img/produto-generico.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="La Panini — Lasanhas Artesanais">
+  <meta name="twitter:description" content="Artesanais, feitas com ingredientes de verdade. Entrega em 6 bairros de Campinas ou retirada grátis.">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Restaurant","name":"La Panini — Lasanhas Artesanais","servesCuisine":"Italiana","priceRange":"$$","telephone":"+55-19-99404-8354","address":{"@type":"PostalAddress","streetAddress":"Rua Osvaldo Serra, 193 — Jd. Interlagos","addressLocality":"Campinas","addressRegion":"SP","addressCountry":"BR"},"openingHours":["Tu-Su 18:00-23:30"]}
+  </script>
+  <script>
+  /* Stubs precoces: imgs estáticas podem falhar antes de js/art.js carregar.
+     Enfileiram e o art.js drena ao carregar (sem ReferenceError). */
+  window.__imgFbQueue = [];
+  window.imgFallback = function (el) { window.__imgFbQueue.push([0, el]); };
+  window.heroFallback = function (el) { window.__imgFbQueue.push([1, el]); };
+  window.imgWebpFallback = function (el) { window.__imgFbQueue.push([2, el]); };
+  </script>
+  <title>La Panini — Lasanhas Artesanais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton+SC&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20261002b">
+</head>
+<body>
+  <a class="skip-link" href="#cardapio">Pular para o cardápio</a>
+
+  <!-- ============ BARRA DE OFERTA ============ -->
+  <div class="offer" id="offer">
+    <div class="offer__center">
+      <span data-offer-text>Ganhe <b>10% OFF</b> no primeiro pedido</span>
+      <a class="offer__copy" href="#leads">Quero meu cupom</a>
+    </div>
+    <button class="offer__close" type="button" data-close-offer aria-label="Fechar oferta">×</button>
+  </div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="header" id="header">
+    <div class="header__inner">
+      <a class="brand" href="#inicio" data-show-offer aria-label="La Panini — Início">
+        <img class="brand__img" src="assets/img/logo-pudim-hass.svg?v=20261004lapanini1" alt="La Panini" width="180" height="46" decoding="async">
+      </a>
+
+      <span class="open" id="header-status" role="status" aria-label="Aberto agora, entrega em 45 a 60 minutos">
+        <span class="open__dot" aria-hidden="true"></span>
+        <span id="header-status-text">Aberto <small>· 45–60 min</small></span>
+      </span>
+
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="Abrir menu" aria-expanded="false" aria-controls="main-nav">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav" id="main-nav" aria-label="Navegação principal">
+        <a href="#inicio" data-show-offer>Início</a>
+        <a href="#sabores">Sabores</a>
+        <a href="#cardapio">Cardápio</a>
+        <a href="#combo">Combo Família</a>
+        <a href="#contato">Contato</a>
+      </nav>
+
+      <div class="header__actions">
+        <button class="top-btn" type="button" data-track-open aria-label="Acompanhar pedido">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="12" y1="0" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="24"/><line x1="0" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="24" y2="12"/></svg>
+          <span class="top-btn__label">Acompanhar pedido</span>
+        </button>
+        <button class="top-btn top-btn--cart" type="button" data-cart-open aria-label="Abrir o carrinho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="top-btn__label">Carrinho</span>
+          <b class="top-btn__count" data-cart-count>0</b>
+        </button>
+        <button class="top-btn top-btn--icon" type="button" data-account-open aria-label="Minha conta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 22a8 8 0 0 1 16 0"/></svg>
+          <span class="top-btn__label">Minha conta</span>
+        </button>
+        <button class="top-btn top-btn--icon" id="theme-btn" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><circle cx="17" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="5" r="0.8" fill="currentColor" stroke="none"/><circle cx="19" cy="14" r="0.8" fill="currentColor" stroke="none"/><circle cx="5" cy="16" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="19" r="0.7" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="inicio" class="hero">
+      <div class="wrap hero__grid">
+        <div class="hero-copy">
+          <p class="kicker" data-hero-kicker>Feito artesanalmente todos os dias</p>
+          <h1 data-hero-title>O pudim que derrete na boca — <em>e chega gelado na sua porta</em></h1>
+          <span class="tagline" data-hero-tagline>Feito artesanalmente todos os dias com ovos caipiras, leite fresco e muito carinho. Entrega refrigerada em até 24h.</span>
+          <div class="cta-row">
+            <a class="btn btn--primary" href="#cardapio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><ellipse cx="9" cy="7" rx="4" ry="5"/><path d="M12.5 11.5 20 19"/></svg>Peça o seu agora</a>
+            <a class="btn btn--ghost" href="#sabores">Ver o cardápio completo</a>
+          </div>
+        </div>
+        <div class="hero-art">
+          <img class="hero__photo" src="assets/img/produto-generico.svg" alt="Pudim artesanal Pudim Hass" data-pid="mesa-farta" width="900" height="900" fetchpriority="high" loading="eager" decoding="async" onerror="heroFallback(this)">
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BARRA DE CONFIANÇA ============ -->
+    <section class="trustbar" aria-label="Diferenciais da entrega">
+      <div class="wrap trustbar__row">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18"/></svg>Entrega refrigerada</span>
+        <span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg>+2.000 clientes avaliaram com 5 estrelas</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12v10H2zM14 10h4l4 4v2h-8z"/><circle cx="6.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg>Frete grátis acima de R$ 80</span>
+      </div>
+    </section>
+
+    <!-- ============ CARDÁPIO ============ -->
+    <section id="cardapio" class="menu">
+      <div class="categories" id="categories" aria-busy="true" aria-label="Carregando categorias"><span class="skel skel--pill"></span><span class="skel skel--pill"></span><span class="skel skel--pill"></span><span class="skel skel--pill"></span></div>
+      <div class="wrap">
+        <div class="menu-carousel">
+          <div class="menu-track" id="menuRows" aria-busy="true" aria-label="Carregando cardápio"><article class="p-card skel-card" aria-hidden="true"><div class="skel skel--img"></div><div class="skel skel--line"></div><div class="skel skel--line skel--short"></div></article><article class="p-card skel-card" aria-hidden="true"><div class="skel skel--img"></div><div class="skel skel--line"></div><div class="skel skel--line skel--short"></div></article><article class="p-card skel-card" aria-hidden="true"><div class="skel skel--img"></div><div class="skel skel--line"></div><div class="skel skel--line skel--short"></div></article></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VITRINE DE SABORES ============ -->
+    <section id="sabores" class="menu">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="kicker">Nossos sabores</p>
+          <h2 class="menu-group__title">Escolha o seu sabor favorito</h2>
+          <p class="vit-sub">Clássicos que todo mundo ama e edições especiais que só saem por aqui.</p>
+        </header>
+        <div class="vit-grid">
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Pudim de Leite Condensado" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Pudim de Leite Condensado</h3>
+              <p class="p-card__desc">O clássico cremoso da vovó, com calda de caramelo dourada.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Adicionar ao carrinho</a></div>
+            </div>
+          </article>
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Pudim de Chocolate Belga" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Pudim de Chocolate Belga</h3>
+              <p class="p-card__desc">Intenso, aveludado, para quem leva chocolate a sério.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Experimentar</a></div>
+            </div>
+          </article>
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Pudim de Maracujá" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Pudim de Maracujá</h3>
+              <p class="p-card__desc">Equilíbrio perfeito entre o doce e o azedinho.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Quero esse</a></div>
+            </div>
+          </article>
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Pudim de Doce de Leite" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Pudim de Doce de Leite</h3>
+              <p class="p-card__desc">Com fios de ouro e um toque argentino.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Pedir agora</a></div>
+            </div>
+          </article>
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Pudim Fit sem açúcar" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Pudim Fit (sem açúcar)</h3>
+              <p class="p-card__desc">Sabor de verdade, sem culpa.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Provar o fit</a></div>
+            </div>
+          </article>
+          <article class="p-card">
+            <div class="p-card__media"><img src="assets/img/produto-generico.svg" alt="Mini Pudims caixa com 6" loading="lazy" decoding="async"></div>
+            <div class="p-card__body">
+              <h3 class="p-card__name">Mini Pudims (caixa c/ 6)</h3>
+              <p class="p-card__desc">Presente perfeito ou sobremesa para a semana.</p>
+              <div class="p-card__foot"><a class="btn btn--primary btn--full" href="#cardapio">Comprar caixa</a></div>
+            </div>
+          </article>
+        </div>
+        <p class="vit-note">Preços e tamanhos aparecem no cardápio abaixo — os botões levam você até lá.</p>
+      </div>
+    </section>
+
+    <!-- ============ DIFERENCIAIS ============ -->
+    <section id="diferenciais" class="steps">
+      <header>
+        <p class="kicker">Por que nossos pudins?</p>
+        <h2>Não é só pudim. É obsessão por cremosidade.</h2>
+      </header>
+      <div class="wrap steps__grid steps__grid--4">
+        <article>
+          <small>01</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></i>
+          <h3>Ingredientes selecionados</h3>
+          <p>Ovos caipiras, leite integral fresco e leite condensado de verdade. Nada de pó instantâneo.</p>
+        </article>
+        <article>
+          <small>02</small>
+          <i><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg></i>
+          <h3>Receita de família</h3>
+          <p>Mais de 30 anos aperfeiçoando o ponto exato do caramelo.</p>
+        </article>
+        <article>
+          <small>03</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18"/></svg></i>
+          <h3>Chega gelado e intacto</h3>
+          <p>Embalagem térmica desenvolvida para preservar textura e apresentação.</p>
+        </article>
+        <article>
+          <small>04</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M12 10v10M4 14h16"/><path d="M12 10c-4 0-5-2-4-4 2 0 4 2 4 4Zm0 0c4 0 5-2 4-4-2 0-4 2-4 4Z"/></svg></i>
+          <h3>Pronto para presentear</h3>
+          <p>Opção de embalagem premium + cartão personalizado.</p>
+        </article>
+      </div>
+      <div class="wrap center-box">
+        <a class="btn btn--primary" href="#cardapio">Sinta a diferença — Peça hoje</a>
+      </div>
+    </section>
+
+    <!-- ============ PROVA SOCIAL ============ -->
+    <section id="prova" class="faq">
+      <div class="wrap">
+        <p class="kicker">Prova social</p>
+        <h2>Quem provou, voltou.</h2>
+        <div class="quotes">
+          <article class="quote">
+            <div class="stars" aria-label="5 de 5 estrelas"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg></div>
+            <p>"Melhor pudim que já comi fora de casa. A calda é perfeita!"</p>
+            <footer>— Mariana S.</footer>
+          </article>
+          <article class="quote">
+            <div class="stars" aria-label="5 de 5 estrelas"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg></div>
+            <p>"Comprei para uma festa e virou o assunto da noite."</p>
+            <footer>— Carlos R.</footer>
+          </article>
+        </div>
+        <div class="center-box">
+          <a class="btn btn--ghost" href="#cardapio">Junte-se aos +2.000 clientes fiéis</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMO FUNCIONA ============ -->
+    <section id="como-funciona" class="steps">
+      <header>
+        <p class="kicker">Sem complicação</p>
+        <h2>Do pedido à sobremesa em 3 passos</h2>
+      </header>
+      <div class="wrap steps__grid">
+        <article>
+          <small>01</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v10H4zM8 10V7a4 4 0 0 1 8 0v3"/></svg></i>
+          <h3>Escolha seus sabores</h3>
+          <p>Monte seu combo ou peça a unidade.</p>
+        </article>
+        <article>
+          <small>02</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18"/></svg></i>
+          <h3>Preparamos no dia</h3>
+          <p>Feito fresquinho, embalado gelado.</p>
+        </article>
+        <article>
+          <small>03</small>
+          <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12v10H2zM14 10h4l4 4v2h-8z"/><circle cx="6.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg></i>
+          <h3>Receba em casa</h3>
+          <p>Entrega refrigerada no mesmo dia ou em 24h.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ COMBO FAMÍLIA ============ -->
+    <section id="combo" class="promo">
+      <div class="wrap">
+        <div class="promo__copy center-box">
+          <p class="kicker">Oferta por tempo limitado</p>
+          <h2>Combo Família: <em>leve mais, pague menos</em></h2>
+          <span class="promo__hint">3 pudins grandes + 1 mini de brinde — economia de 20%.</span>
+          <div class="feature center-box">
+            <div class="feature__media">
+              <img src="assets/img/produto-generico.svg" alt="Combo Família Pudim Hass" loading="lazy" decoding="async">
+              <span class="feature__badge">−20% OFF</span>
+            </div>
+            <div class="feature__body">
+              <h3 class="feature__title">Combo Família</h3>
+              <p class="feature__desc">3 pudins grandes à sua escolha + <b>1 mini de brinde</b>.</p>
+              <ul class="feature__meta" aria-label="Detalhes da oferta">
+                <li>3 grandes</li>
+                <li>1 mini brinde</li>
+                <li>entrega refrigerada</li>
+              </ul>
+              <span class="price__save">Só 12 combos disponíveis hoje</span>
+              <a class="btn btn--primary" href="#cardapio">Garantir meu combo</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CAPTURA DE LEADS ============ -->
+    <section id="leads" class="leads">
+      <div class="wrap leads__card">
+        <p class="kicker">Primeiro pedido</p>
+        <h2>Ganhe 10% no primeiro pedido</h2>
+        <p class="leads__sub">Cadastre-se e receba seu cupom + novidades de sabores sazonais.</p>
+        <form class="leads__form" id="leads-form">
+          <input class="field__input" type="email" id="leads-email" placeholder="Seu melhor e-mail" autocomplete="email" aria-label="Seu e-mail">
+          <button class="btn btn--primary" type="submit">Quero meu cupom</button>
+        </form>
+        <p class="leads__note" id="leads-note" role="status"></p>
+        <script>
+        (function () {
+          var WHATS = '5519994048354'; /* TODO: trocar pelo WhatsApp do Pudim Hass */
+          var form = document.getElementById('leads-form');
+          if (!form) { return; }
+          form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var input = document.getElementById('leads-email');
+            var note = document.getElementById('leads-note');
+            var email = (input.value || '').trim();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+              note.textContent = 'Digite um e-mail válido para receber o cupom.';
+              input.focus();
+              return;
+            }
+            try { localStorage.setItem('pudimhass_lead', email); } catch (err) {}
+            note.textContent = 'Cadastro feito! Abrindo o WhatsApp para enviar seu cupom…';
+            window.open('https://wa.me/' + WHATS + '?text=' + encodeURIComponent('Quero meu cupom de 10%! Meu e-mail: ' + email), '_blank', 'noopener');
+          });
+        })();
+        </script>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="wrap footer__grid">
+      <div>
+        <p class="footer__brand"><img class="footer__logo" src="assets/img/logo-pudim-hass.svg?v=20261004lapanini1" alt="La Panini" width="160" height="41" loading="lazy" decoding="async"></p>
+        <p>Lasanhas artesanais congeladas, feitas em 3 tamanhos: 500g <b class="dot-brand">•</b> 1kg <b class="dot-brand">•</b> 1,5kg e prontas para assar.</p>
+      </div>
+      <div>
+        <p data-foot-address><b>La Panini</b><br>Rua Osvaldo Serra, 193 — Jd. Interlagos<br>Campinas · SP<br>Ter–Dom · 18h às 23h30</p>
+      </div>
+      <div class="footer__contact">
+        <p><b>Fale com a La Panini</b><br><a href="https://wa.me/5519994048354" target="_blank" rel="noopener" data-foot-phone>(19) 99404-8354</a><br>WhatsApp para pedidos e dúvidas.</p>
+        <small>© 2026 La Panini — Lasanhas Artesanais.<br><a href="admin.html">área administrativa</a></small>
+      </div>
+      <div>
+        <p><b>Políticas e Termos</b></p>
+        <ul class="footer__terms">
+          <li><a href="politica-de-privacidade.html">Política de Privacidade</a></li>
+          <li><a href="politica-de-troca-e-devolucao.html">Política de Troca e Devolução</a></li>
+          <li><a href="politica-de-pagamento.html">Política de Pagamento</a></li>
+          <li><a href="politica-de-seguranca.html">Política de Segurança</a></li>
+          <li><a href="termos-de-uso.html">Termos de Uso</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ FABS ============ -->
+  <a class="fab fab--whats" href="https://wa.me/5519994048354" target="_blank" rel="noopener" aria-label="Falar com a La Panini no WhatsApp">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 11.8a8.5 8.5 0 0 1-12.6 7.5L3 20.6l1.3-4.7A8.5 8.5 0 1 1 20.5 11.8Z"/><path d="M8.1 7.4c.5 4.5 3 7 7.5 7.5l1.1-1.4-2.8-1.3-.9.9a6.7 6.7 0 0 1-2.2-2.2l.9-.9-1.3-2.8-1.4 1.1"/></svg>
+  </a>
+  <button class="floating-cart" type="button" data-cart-open aria-label="Abrir o carrinho">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <b data-cart-count>0</b>
+  </button>
+  <button class="floating-theme" type="button" data-theme-toggle aria-label="Alternar tema claro/escuro" title="Alternar tema">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><circle cx="17" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="5" r="0.8" fill="currentColor" stroke="none"/><circle cx="19" cy="14" r="0.8" fill="currentColor" stroke="none"/><circle cx="5" cy="16" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="19" r="0.7" fill="currentColor" stroke="none"/></svg>
+  </button>
+
+  <!-- ============ DRAWER DA SACOLA ============ -->
+  <aside id="cart" class="drawer" aria-hidden="true">
+    <div class="drawer__backdrop" data-cart-close></div>
+    <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Carrinho">
+      <header class="drawer__head">
+        <h2 id="drawer-title">Carrinho</h2>
+        <button class="drawer__close" type="button" data-cart-close aria-label="Fechar carrinho">×</button>
+      </header>
+      <div class="drawer__body" id="cart-body"></div>
+      <footer class="drawer__foot" id="cart-foot"></footer>
+    </div>
+  </aside>
+
+  <!-- ============ ACCOMPANHAR PEDIDO ============ -->
+  <div class="panel" id="track" hidden>
+    <div class="panel__backdrop" data-track-close></div>
+    <div class="panel__card" role="dialog" aria-modal="true" aria-label="Acompanhar pedido">
+      <header class="panel__head">
+        <div>
+          <p class="kicker">ACOMPANHAMENTO</p>
+          <h2>Acompanhar pedido</h2>
+        </div>
+        <button class="drawer__close" type="button" data-track-close aria-label="Fechar">×</button>
+      </header>
+      <div class="panel__body" id="track-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ MINHA CONTA ============ -->
+  <div class="panel" id="account" hidden>
+    <div class="panel__backdrop" data-account-close></div>
+    <div class="panel__card" role="dialog" aria-modal="true" aria-label="Minha conta">
+      <header class="panel__head">
+        <h2>Minha conta</h2>
+        <button class="drawer__close" type="button" data-account-close aria-label="Fechar">×</button>
+      </header>
+      <div class="panel__body" id="account-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL ============ -->
+  <div id="modal" class="modal" hidden></div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============ AVISO LGPD ============ -->
+  <aside class="lgpd" id="lgpd" role="dialog" aria-live="polite" aria-label="Aviso de privacidade" hidden>
+    <div class="lgpd__card">
+      <p class="kicker">LGPD · PRIVACIDADE</p>
+      <p class="lgpd__title">Seus dados, com respeito</p>
+      <p class="lgpd__text">Usamos armazenamento local do navegador para guardar sua sacola, tema e cupom — e os dados do pedido apenas para entregar sua lasanha. Nada de rastreadores. Detalhes na <a href="politica-de-privacidade.html">Política de Privacidade</a>.</p>
+      <div class="lgpd__actions">
+        <button class="btn btn--primary" type="button" data-lgpd-accept>Aceitar e continuar</button>
+        <button class="btn btn--ghost" type="button" data-lgpd-decline>Recusar</button>
+      </div>
+    </div>
+  </aside>
+
+  <noscript>
+    <p style="padding:1rem;text-align:center;background:#D32F2F;color:#fff;">Ative o JavaScript para navegar na loja La Panini.</p>
+  </noscript>
+
+  <script src="js/data.js?v=20261122"></script>
+  <script src="js/catalog.js?v=20261122"></script>
+  <script src="js/art.js?v=20261109"></script>
+  <script src="js/api.js?v=20261093"></script>
+  <script src="js/app.js?v=20261001e"></script>
+  <script src="js/lgpd.js?v=20261090"></script>
+</body>
+</html>

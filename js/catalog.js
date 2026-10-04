@@ -298,6 +298,84 @@ var PRODUCTS = [
     { sizes: [{ id: 'u', label: '130g · 1 porção', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
       { label: 'Leite condensado' }, { label: 'Doce de leite' }, { label: 'Calda de caramelo' } ] }),
 
+  /* ==================== Os Mais Pedidos ==================== */
+
+  P('pudim-leite-moca-familia', 'mais-pedidos', 'Pudim de Leite Moça Tradicional - Tamanho Família', 84.90,
+    'O clássico da casa no tamanho para dividir.',
+    'Pudim de Leite Moça tradicional em tamanho família. Textura firme e calda generosa para a mesa toda.',
+    { sizes: [{ id: 'u', label: 'Tamanho Família', factor: 1 }], addonGroup: 'doce', tags: ['Família'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Ovos' }, { label: 'Calda de caramelo' } ] }),
+
+  P('pudim-leite-moca-individual', 'mais-pedidos', 'Pudim de Leite Moça Tradicional - Individual', 14.90,
+    'O clássico em porção individual.',
+    'Pudim de Leite Moça tradicional em porção individual. A medida certa da vontade.',
+    { sizes: [{ id: 'u', label: 'Individual · 1 porção', factor: 1 }], addonGroup: 'doce', tags: ['Individual'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Ovos' }, { label: 'Calda de caramelo' } ] }),
+
+  P('pudim-leite-moca-medio-550g', 'mais-pedidos', 'Pudim de Leite Moça Tradicional - Tamanho Médio (550g)', 49.90,
+    'O clássico no tamanho médio de 550g.',
+    'Pudim de Leite Moça tradicional, 550g. Equilíbrio perfeito entre vontade e partilha.',
+    { sizes: [{ id: 'u', label: '550g · Médio', factor: 1 }], addonGroup: 'doce', tags: ['550g'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Ovos' }, { label: 'Calda de caramelo' } ] }),
+
+  P('pudim-geladinho-gourmet', 'mais-pedidos', 'Geladinho Gourmet de Pudim de Leite Moça', 12.90,
+    'Refrescância cremosa de pudim.',
+    'Geladinho gourmet de pudim de Leite Moça. Cremoso e gelado na medida.',
+    { sizes: [{ id: 'u', label: 'Unidade · geladinho', factor: 1 }], addonGroup: 'doce', tags: ['Geladinho'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Leite' } ] }),
+
+  P('pudim-laka-granule', 'mais-pedidos', 'Pudim de Laka com Granulê (Brigadeirão Branco)', 16.90,
+    'Brigadeirão branco com granulê.',
+    'Pudim de Laka com granulê, o brigadeirão branco cremoso com cobertura crocante.',
+    { sizes: [{ id: 'u', label: 'Unidade · com granulê', factor: 1 }], addonGroup: 'doce', tags: ['Brigadeirão'], ingredients: [
+      { label: 'Chocolate Laka' }, { label: 'Leite Moça' }, { label: 'Granulê' } ] }),
+
+  /* ==================== Promoção do Dia! ==================== */
+
+  P('pudim-combo-tradicional-geladinho', 'promocao-do-dia', 'Combo Pudim Tradicional + Geladinho', 89.90,
+    '1 Pudim Família Tradicional + 1 geladinho sabor variado conforme disponibilidade na loja.',
+    'Combo com 1 Pudim Família Tradicional e 1 geladinho de sabor variado, conforme disponibilidade na loja.',
+    { old: 97.80, badge: '−8% OFF', sizes: [{ id: 'u', label: 'Combo', factor: 1 }], addonGroup: 'doce', tags: ['Combo'], ingredients: [
+      { label: 'Pudim família tradicional' }, { label: 'Geladinho' } ] }),
+
+  P('pudim-combo-5-geladinhos', 'promocao-do-dia', 'Combo com 5 Geladinhos com Desconto!', 59.90,
+    '5 geladinhos conforme sabores disponíveis no dia! Com desconto especial!',
+    'Combo com 5 geladinhos nos sabores disponíveis no dia, com desconto especial aplicado.',
+    { old: 64.50, badge: '−7% OFF', sizes: [{ id: 'u', label: '5 unidades', factor: 1 }], addonGroup: 'doce', tags: ['Combo'], ingredients: [
+      { label: 'Geladinhos sortidos' } ] }),
+
+  P('pudim-kit-caixa-4', 'promocao-do-dia', 'Kit Caixa Presenteável com 4 Pudins Individuais', 59.90,
+    '4 pudins sortidos conforme disponibilidade do dia.',
+    'Kit em caixa presenteável com 4 pudins individuais sortidos, conforme disponibilidade do dia.',
+    { sizes: [{ id: 'u', label: 'Caixa com 4', factor: 1 }], addonGroup: 'doce', tags: ['Presenteável'], ingredients: [
+      { label: 'Pudins individuais sortidos' } ] }),
+
+  /* ==================== Top Mais Vendidos! ==================== */
+
+  P('pudim-premium-tradicional-individual', 'top-mais-vendidos', 'Pudim Tradicional de Leite Moça - Individual', 14.90,
+    'O melhor pudim da vida! Macio, cremoso e lisinho.',
+    'Nosso inconfundível Pudim Premium Gourmet 130g feito com puro Leite Moça! Macio e cremoso! O mais vendido, lisinho e saboroso... Vale a pena cada colherada! Assado em forno lento e baixo. Enviado em embalagem descartável, você desenforma em casa de maneira fácil e prática!',
+    { badge: 'O mais queridinho', sizes: [{ id: 'u', label: '130g · Individual', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Ovos' }, { label: 'Calda de caramelo' } ] }),
+
+  P('pudim-premium-doce-leite-individual', 'top-mais-vendidos', 'Pudim de Doce de Leite - Individual', 14.90,
+    'Com Doce de Leite Mineiro, o melhor de Minas Gerais.',
+    'Pudim Premium Gourmet 130g feito com puro Leite Moça + Doce de Leite Mineiro! Macio e cremoso, sabor sem igual! Assado em forno lento e baixo. Tamanho individual em embalagem descartável.',
+    { sizes: [{ id: 'u', label: '130g · Individual', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Doce de leite mineiro' } ] }),
+
+  P('pudim-premium-brigadeiro-individual', 'top-mais-vendidos', 'Pudim de Brigadeiro Gourmet - Individual', 16.90,
+    'O brigadeirão viciante, top 2 mais vendidos.',
+    'Pudim Premium Gourmet 130g feito com puro Leite Moça + chocolate nobre! Cobertura de granulê ao leite. Macio e cremoso, doce na medida certa! Assado em forno lento e baixo. Tamanho individual em embalagem descartável.',
+    { sizes: [{ id: 'u', label: '130g · Individual', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Chocolate nobre' }, { label: 'Granulê ao leite' } ] }),
+
+  P('pudim-premium-cheesecake-individual', 'top-mais-vendidos', 'Pudim de Cream Cheese com Frutas Vermelhas (Cheesecake) - Individual', 16.90,
+    'Uma experiência gastronômica, top 3 mais vendidos.',
+    'Pudim Premium Gourmet 130g feito com puro Leite Moça + Cream Cheese com calda de frutas vermelhas artesanal! Uma mistura de sabores que vai surpreender o seu paladar! Assado em forno lento e baixo. Tamanho individual em embalagem descartável.',
+    { sizes: [{ id: 'u', label: '130g · Individual', factor: 1 }], addonGroup: 'doce', tags: ['130g'], ingredients: [
+      { label: 'Leite Moça' }, { label: 'Cream cheese' }, { label: 'Calda de frutas vermelhas' } ] }),
+
   P('romeu-julieta', 'sobremesas', 'Romeu e Julieta', 39.90,
     'Queijo muçarela e goiabada no molho belga.',
     'Lasanha Romeu e Julieta com queijo muçarela e goiabada, finalizada com molho belga. Sob encomenda.',

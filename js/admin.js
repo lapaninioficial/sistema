@@ -215,6 +215,7 @@ var TITLES = {
   dashboard: 'Visão geral',
   pedidos: 'Pedidos',
   lasanhas: 'Lasanhas',
+  pudins: 'Menu de Pudins',
   tamanhos: 'Tamanhos',
   adicionais: 'Adicionais',
   bebidas: 'Bebidas',
@@ -396,7 +397,7 @@ var MOCK_SIZES = [
 
 /* Adicionais agora vêm da API real (GET admin/addons); sem mock local. */
 var MOCK_COUPONS_DATA = [
-  { code: 'LAPANINI10', ctype: 'percent', cvalue: 10, label: 'Oferta da Brasa: 10% OFF com LAPANINI10', max_uses: 100, used: 47, active: true, highlight: true, expires_at: '2026-12-31' },
+  { code: 'PUDIMHASS10', ctype: 'percent', cvalue: 10, label: 'Oferta da Brasa: 10% OFF com PUDIMHASS10', max_uses: 100, used: 47, active: true, highlight: true, expires_at: '2026-12-31' },
   { code: 'NOVOCLIENTE', ctype: 'fixed', cvalue: 15, label: 'R$15 off para novos clientes', max_uses: 50, used: 12, active: true, highlight: false, expires_at: '2026-12-31' },
   { code: 'QUINTA15', ctype: 'percent', cvalue: 15, label: 'Quinta da Lasanha', max_uses: null, used: 234, active: true, highlight: true, expires_at: '2026-06-30' },
   { code: 'FRETEGRATIS', ctype: 'fixed', cvalue: 8.90, label: 'Frete grátis', max_uses: 200, used: 89, active: false, highlight: false, expires_at: '2026-03-31' }
@@ -757,10 +758,10 @@ function updateRevenueRanges() {
    ===================================================================== */
 
 var STATUSES = [
-  { id: 'recebido', name: 'Pendente', color: '#E8A838' },
+  { id: 'recebido', name: 'Pendente', color: '#E8A33D' },
   { id: 'confirmado', name: 'Confirmado', color: '#5BA0D0' },
-  { id: 'preparacao', name: 'Em preparação', color: '#F26B21' },
-  { id: 'entrega', name: 'Saiu para entrega', color: '#5CB85C' },
+  { id: 'preparacao', name: 'Em preparação', color: '#E07A4F' },
+  { id: 'entrega', name: 'Saiu para entrega', color: '#7fc492' },
   { id: 'entregue', name: 'Entregue', color: '#8A8078' }
 ];
 
@@ -786,9 +787,9 @@ function orderCard(o) {
   var payMethod = o.payment.method;
   var payLabel = PAY_LABEL[payMethod] || titleCase(payMethod);
   var payIcon = PAY_ICONS[payMethod] || '';
-  var payColor = payMethod === 'pix' ? 'rgba(69,200,120,0.14);color:var(--good)' :
+  var payColor = payMethod === 'pix' ? 'rgba(127,196,146,0.14);color:var(--good)' :
                  payMethod === 'cartao' ? 'rgba(100,160,255,0.12);color:#64A0FF' :
-                 'rgba(224,164,88,0.14);color:var(--warn)';
+                 'rgba(232,163,61,0.14);color:var(--warn)';
 
   var distHtml = o.delivery.mode === 'entrega'
     ? '<span class="meta-tag entrega">' + DELIVERY_ICO + ' Entrega · ' + esc(o.delivery.districtName) + '</span>'
@@ -876,7 +877,7 @@ function colColor(id) {
   for (var i = 0; i < STATUSES.length; i++) {
     if (STATUSES[i].id === id) return STATUSES[i].color;
   }
-  return '#F26B21';
+  return '#E07A4F';
 }
 
 function moveOrderTo(id, newStatus) {
@@ -1265,7 +1266,7 @@ var LASANHAS_DATA = [];
 var LASANHA_CATS = [];
 var LAS_CAT_ORDER = ['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar',
   'selecoes-personalizadas', 'selecoes-fechadas', 'doces', 'sobremesas', 'bebidas',
-  'massa-fresca', 'molhos-caseiros'];
+  'caldas', 'geladinhos'];
 
 /* Tarefa B — normaliza produto da API (GET /admin/products) para o card da tela Lasanhas. */
 function lasActive(v) {
@@ -1725,11 +1726,11 @@ function paintAreas() {
    ===================================================================== */
 
 var BANNER_GRADIENTS = [
-  'linear-gradient(135deg,#F26B21,#C44E30)',
+  'linear-gradient(135deg,#973b39,#541413)',
   'linear-gradient(135deg,#5BA0D0,#3B7DD8)',
-  'linear-gradient(135deg,#5CB85C,#3D8B3D)',
+  'linear-gradient(135deg,#3e7d4f,#2e5f3c)',
   'linear-gradient(135deg,#8A8078,#6A5A4E)',
-  'linear-gradient(135deg,#E8A838,#F26B21)'
+  'linear-gradient(135deg,#e8a33d,#c98a2e)'
 ];
 
 function renderBanners() {
@@ -1957,8 +1958,8 @@ var HOME_FIELDS = {
   ]
 };
 
-var HOME_FIELD_DEFAULTS = {  offer_text: 'Oferta da Brasa: 10% OFF com <b data-offer-code>LAPANINI10</b>',
-  offer_code: 'LAPANINI10',
+var HOME_FIELD_DEFAULTS = {  offer_text: 'Oferta da Brasa: 10% OFF com <b data-offer-code>PUDIMHASS10</b>',
+  offer_code: 'PUDIMHASS10',
   hero_kicker: 'Artesanal · congelada na hora · pronta para assar',
   hero_title: 'Sabor <span style="white-space:nowrap">que conquista,</span><br> <em>entrega que encanta</em>',
   hero_tagline: 'Artesanais, ingredientes de verdade e aquele sabor de brasa entregue na sua porta.',
@@ -1978,10 +1979,10 @@ var HOME_STYLEABLE = ['offer', 'hero', 'promocoes', 'footer'];
 
 function openHomeEditModal(s, st) {
   var preview = {
-    offer: '<b>Oferta da Brasa:</b> 10% OFF com <b>LAPANINI10</b> + botão “Copiar cupom” + × fechar',
+    offer: '<b>Oferta da Brasa:</b> 10% OFF com <b>PUDIMHASS10</b> + botão “Copiar cupom” + × fechar',
     hero: '<b>Sabor que conquista, entrega que encanta</b> · “Artesanais, ingredientes de verdade…” · botões “Pedir agora” e cupom · ★ 4,9 · +800 avaliações',
     cardapio: 'Barra de categorias (Todos, Seleções, Clássicos…) + carrossel de produtos com foto, preço e “Adicionar”',
-    promocoes: '<b>Mesa Farta</b> — 4 lasanhas de 1,5kg · de R$ 405,60 por <b>R$ 356,90</b> (−12% OFF) + frete grátis + cupom LAPANINI10',
+    promocoes: '<b>Mesa Farta</b> — 4 lasanhas de 1,5kg · de R$ 405,60 por <b>R$ 356,90</b> (−12% OFF) + frete grátis + cupom PUDIMHASS10',
     steps: '<b>Seu pedido em 3 passos:</b> 01 Escolha · 02 Informe onde · 03 A casa faz o resto',
     duvidas: '6 perguntas frequentes (horário, pagamento, taxa, prazo, acompanhamento, congeladas) + chamada WhatsApp',
     benefits: '4 itens: 18h–23h30 · Terça a domingo · 6 bairros · Retirada grátis Jd. Interlagos',
@@ -2164,6 +2165,7 @@ var CFG_SPEC = [
   { id: 'cfg-delivery',     k: 'delivery_active', t: 'bool' },
   { id: 'cfg-pickup',       k: 'pickup_active',   t: 'bool' },
   { id: 'cfg-min-delivery', k: 'min_delivery',    t: 'text' },
+  { id: 'cfg-eta',           k: 'eta',             t: 'text' },
   { id: 'cfg-notif-sound',  k: 'notif_sound',      t: 'bool' },
   { id: 'cfg-notif-email',  k: 'notif_email',      t: 'bool' },
   { id: 'cfg-notif-whats',  k: 'notif_whats',      t: 'bool' },
@@ -2223,6 +2225,7 @@ function renderConfig() {
       toggleHtml('cfg-delivery', 'Entrega ativa', true) +
       toggleHtml('cfg-pickup', 'Retirada no local ativa', true) +
       field('cfg-min-delivery', 'Pedido mínimo para entrega', '30.00', { type: 'number' }) +
+      field('cfg-eta', 'Tempo de entrega', '45–60 min', { placeholder: 'Ex.: 45–60 min', minor: 'Digite só o tempo — aparece na loja como “Aberto · 45–60 min”' }) +
     '</div></div>' +
     '<div class="config-section"><h3 class="config-section__title">Notificações</h3><div class="card" style="display:flex;gap:24px;flex-wrap:wrap">' +
       toggleHtml('cfg-notif-sound', 'Som de novos pedidos', true) +
@@ -2306,8 +2309,8 @@ function lasanhaModal(lasanha) {
     { v: 'selecoes-fechadas', l: 'Seleções Fechadas' },
     { v: 'selecoes-personalizadas', l: 'Seleções Personalizadas' },
     { v: 'frutosdormar', l: 'Frutos do Mar' },
-    { v: 'massa-fresca', l: 'Massa Fresca' },
-    { v: 'molhos-caseiros', l: 'Molhos Caseiros' }
+    { v: 'caldas', l: 'Caldas' },
+    { v: 'geladinhos', l: 'Geladinhos' }
   ];
   var sizesHtml = '';
   if (l.sizes && l.sizes.length) {
@@ -2615,6 +2618,26 @@ function cfReset() {
   try { if (cfHasWidget() && (typeof turnstile.reset === 'function')) { turnstile.reset(); } }
   catch (e) {}
 }
+/* Injeta o widget Turnstile só com Site Key configurada
+   (window.TURNSTILE_SITE_KEY em admin.html). Sem chave, cfHasWidget()
+   segue falso e tudo funciona como hoje (modo transição no servidor). */
+function cfBoot() {
+  try {
+    if (window.__cfBooted) { return; }
+    var key = String(window.TURNSTILE_SITE_KEY || '').trim();
+    if (!key) { return; }
+    window.__cfBooted = true;
+    var w = document.getElementById('cf-widget');
+    if (w) { w.setAttribute('data-sitekey', key); }
+    var slot = document.getElementById('cf-slot');
+    if (slot) { slot.hidden = false; }
+    var s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  } catch (e) {}
+}
 /* finally real (com fallback ES5): fn roda após sucesso OU falha. */
 function withFinally(p, fn) {
   if (p && typeof p.finally === 'function') { return p.finally(fn); }
@@ -2811,11 +2834,15 @@ function saveAdicional() {
     label: label, grp: val('ad-grp'), price: parseFloat(val('ad-price')) || 0,
     required: bool('ad-required'), active: cur ? cur.active : true
   };
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+  data.cf_turnstile_token = cfToken;
+  data.cf_present = cfHasWidget();
   var p;
   if (id) { p = putJ('admin/addons/' + encodeURIComponent(id), data); }
   else { data.position = (S_ADDONS.rows || []).length + 1; p = postJ('admin/addons', data); }
-  p.then(function () { closeModal(); toast(id ? 'Adicional atualizado!' : 'Adicional criado!'); renderAdicionais(); })
-   .catch(function (e) { toast(e.message, true); });
+  p.then(function () { cfReset(); closeModal(); toast(id ? 'Adicional atualizado!' : 'Adicional criado!'); renderAdicionais(); })
+   .catch(function (e) { cfReset(); toast(e.message, true); });
 }
 
 function saveCupom() {
@@ -2832,6 +2859,8 @@ function saveCupom() {
   }
   var cur = null;
   MOCK_COUPONS_DATA.forEach(function (c) { if (c.code === id) { cur = c; } });
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
   var payload = {
     code: code.toUpperCase(),
     ctype: val('cp-type'),
@@ -2840,11 +2869,13 @@ function saveCupom() {
     highlight: !!(cur && cur.highlight),
     active: cur ? !!cur.active : true,
     maxUses: val('cp-max') ? parseInt(val('cp-max'), 10) : null,
-    expiresAt: val('cp-expires') || null
+    expiresAt: val('cp-expires') || null,
+    cf_turnstile_token: cfToken,
+    cf_present: cfHasWidget()
   };
   var p = id ? putJ('admin/coupons/' + encodeURIComponent(id), payload) : postJ('admin/coupons', payload);
-  p.then(function () { closeModal(); toast(id ? 'Cupom atualizado!' : 'Cupom criado!'); renderCupons(); })
-   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
+  p.then(function () { cfReset(); closeModal(); toast(id ? 'Cupom atualizado!' : 'Cupom criado!'); renderCupons(); })
+   .catch(function (e) { cfReset(); toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveArea() {
@@ -2861,16 +2892,20 @@ function saveArea() {
   }
   var cur = null;
   MOCK_AREAS_DATA.forEach(function (a) { if (String(a.id) === String(id)) { cur = a; } });
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
   var payload = {
     name: name,
     fee: parseFloat(val('ar-fee')) || 0,
     eta: parseInt(val('ar-eta'), 10) || 25,
     position: cur ? (cur.position || 0) : (MOCK_AREAS_DATA.length + 1),
-    active: cur ? !!cur.active : true
+    active: cur ? !!cur.active : true,
+    cf_turnstile_token: cfToken,
+    cf_present: cfHasWidget()
   };
   var p = id ? putJ('admin/areas/' + encodeURIComponent(id), payload) : postJ('admin/areas', payload);
-  p.then(function () { closeModal(); toast(id ? 'Área atualizada!' : 'Área criada!'); renderAreas(); })
-   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
+  p.then(function () { cfReset(); closeModal(); toast(id ? 'Área atualizada!' : 'Área criada!'); renderAreas(); })
+   .catch(function (e) { cfReset(); toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveBanner() {
@@ -2900,16 +2935,20 @@ function saveBanner() {
      title/subtitle/position/active vão para a API. */
   var cur = null;
   MOCK_BANNERS_DATA.forEach(function (b) { if (String(b.id) === String(id)) { cur = b; } });
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
   var payload = {
     title: title,
     subtitle: val('bn-subtitle'),
     position: val('bn-position') || 'home-middle',
     active: cur ? !!cur.active : true,
-    positionOrder: cur ? (cur.position_order || 0) : (MOCK_BANNERS_DATA.length + 1)
+    positionOrder: cur ? (cur.position_order || 0) : (MOCK_BANNERS_DATA.length + 1),
+    cf_turnstile_token: cfToken,
+    cf_present: cfHasWidget()
   };
   var p = id ? putJ('admin/banners/' + encodeURIComponent(id), payload) : postJ('admin/banners', payload);
-  p.then(function () { closeModal(); toast(id ? 'Banner atualizado!' : 'Banner criado!'); renderBanners(); })
-   .catch(function (e) { toast((e && e.message) || 'Falha ao salvar.', true); });
+  p.then(function () { cfReset(); closeModal(); toast(id ? 'Banner atualizado!' : 'Banner criado!'); renderBanners(); })
+   .catch(function (e) { cfReset(); toast((e && e.message) || 'Falha ao salvar.', true); });
 }
 
 function saveConfig() {
@@ -3029,43 +3068,59 @@ function deleteLasanha(id, btn) {
 function deleteTamanho(id) { if (!window.confirm('Excluir este tamanho?')) return; MOCK_SIZES = MOCK_SIZES.filter(function (s) { return s.id !== id; }); toast('Excluído'); renderTamanhos(); }
 function deleteAdicional(id) {
   if (!window.confirm('Excluir este adicional?')) return;
-  delJ('admin/addons/' + encodeURIComponent(id))
-    .then(function () { toast('Excluído'); renderAdicionais(); })
-    .catch(function (e) { toast(e.message, true); });
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+  apiRequest('DELETE', 'admin/addons/' + encodeURIComponent(id), { cf_turnstile_token: cfToken, cf_present: cfHasWidget() })
+    .then(function () { cfReset(); toast('Excluído'); renderAdicionais(); })
+    .catch(function (e) { cfReset(); toast(e.message, true); });
 }
 function deleteCupom(id) {
   if (!window.confirm('Excluir este cupom?')) return;
   if (!isOnline()) { MOCK_COUPONS_DATA = MOCK_COUPONS_DATA.filter(function (c) { return c.code !== id; }); toast('Excluído'); renderCupons(); return; }
-  delJ('admin/coupons/' + encodeURIComponent(id)).then(function () { toast('Excluído'); renderCupons(); })
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+  apiRequest('DELETE', 'admin/coupons/' + encodeURIComponent(id), { cf_turnstile_token: cfToken, cf_present: cfHasWidget() }).then(function () { cfReset(); toast('Excluído'); renderCupons(); })
    .catch(function (e) {
      if (e && e.status === 409) {
+       cfReset();
        if (window.confirm('Cupom já usado em pedidos — apenas desativar?')) {
-         putJ('admin/coupons/' + encodeURIComponent(id), { active: false }).then(function () { toast('Cupom desativado.'); renderCupons(); }, function (e2) { toast(e2.message, true); });
+         var cfToken2 = cfCollectToken();
+         if (cfHasWidget() && !cfToken2) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+         putJ('admin/coupons/' + encodeURIComponent(id), { active: false, cf_turnstile_token: cfToken2, cf_present: cfHasWidget() }).then(function () { cfReset(); toast('Cupom desativado.'); renderCupons(); }, function (e2) { cfReset(); toast(e2.message, true); });
        }
        return;
      }
+     cfReset();
      toast(e.message, true);
    });
 }
 function deleteArea(id) {
   if (!window.confirm('Excluir esta área?')) return;
   if (!isOnline()) { MOCK_AREAS_DATA = MOCK_AREAS_DATA.filter(function (a) { return a.id !== id; }); toast('Excluído'); renderAreas(); return; }
-  delJ('admin/areas/' + encodeURIComponent(id)).then(function () { toast('Excluída'); renderAreas(); })
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+  apiRequest('DELETE', 'admin/areas/' + encodeURIComponent(id), { cf_turnstile_token: cfToken, cf_present: cfHasWidget() }).then(function () { cfReset(); toast('Excluída'); renderAreas(); })
    .catch(function (e) {
      if (e && e.status === 409) {
+       cfReset();
        if (window.confirm('Área usada em pedidos — apenas desativar?')) {
-         putJ('admin/areas/' + encodeURIComponent(id), { active: false }).then(function () { toast('Área desativada.'); renderAreas(); }, function (e2) { toast(e2.message, true); });
+         var cfToken2 = cfCollectToken();
+         if (cfHasWidget() && !cfToken2) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+         putJ('admin/areas/' + encodeURIComponent(id), { active: false, cf_turnstile_token: cfToken2, cf_present: cfHasWidget() }).then(function () { cfReset(); toast('Área desativada.'); renderAreas(); }, function (e2) { cfReset(); toast(e2.message, true); });
        }
        return;
      }
+     cfReset();
      toast(e.message, true);
    });
 }
 function deleteBanner(id) {
   if (!window.confirm('Excluir este banner?')) return;
   if (!isOnline()) { MOCK_BANNERS_DATA = MOCK_BANNERS_DATA.filter(function (b) { return String(b.id) !== String(id); }); toast('Excluído'); renderBanners(); return; }
-  delJ('admin/banners/' + encodeURIComponent(id)).then(function () { toast('Excluído'); renderBanners(); })
-   .catch(function (e) { toast(e.message, true); });
+  var cfToken = cfCollectToken();
+  if (cfHasWidget() && !cfToken) { toast('Por favor, conclua a validação anti-robô.', true); return; }
+  apiRequest('DELETE', 'admin/banners/' + encodeURIComponent(id), { cf_turnstile_token: cfToken, cf_present: cfHasWidget() }).then(function () { cfReset(); toast('Excluído'); renderBanners(); })
+   .catch(function (e) { cfReset(); toast(e.message, true); });
 }
 
 function duplicateLasanha(id, btn) {
@@ -3585,6 +3640,7 @@ function normSobremesaFromProduct(p) {
   return {
     id: String(p.id || ''),
     name: String(p.name || ''),
+    cat: String(p.cat_id || p.cat || ''),
     price: soPrice(p),
     active: soActive(p.active),
     image: '',
@@ -3632,6 +3688,157 @@ function paintSobremesas(rows) {
       '</td></tr>';
   }).join('');
   $('#content').innerHTML = toolbar + tbl(['Imagem', 'Nome', 'Preço', 'Status', 'Ações'], html);
+}
+
+function isPudimRow(s) {
+  if (!s || !s.id) { return false; }
+  return String(s.id).indexOf('pudim') === 0;
+}
+
+/* Mesma estrutura do módulo Lasanhas: busca + chips de categoria/status
+   e cards agrupados por categoria. */
+var S_PUDINS = { q: '', cat: '', active: '' };
+var PUDIM_CATS = [
+  { id: 'sobremesas', name: 'Sobremesas' },
+  { id: 'mais-pedidos', name: 'Os Mais Pedidos' },
+  { id: 'promocao-do-dia', name: 'Promoção do Dia!' },
+  { id: 'top-mais-vendidos', name: 'Top Mais Vendidos!' }
+];
+function pudimCatName(id) {
+  var f = null;
+  PUDIM_CATS.forEach(function (c) { if (String(c.id) === String(id)) { f = c; } });
+  return f ? f.name : (String(id || '').replace(/-/g, ' ') || 'Sem categoria');
+}
+function filterPudins(rows) {
+  var out = (rows || []).filter(isPudimRow);
+  if (S_PUDINS.cat) {
+    out = out.filter(function (s) { return String(s.cat || '') === String(S_PUDINS.cat); });
+  }
+  if (S_PUDINS.q) {
+    var q = S_PUDINS.q.toLowerCase();
+    out = out.filter(function (s) { return (s.name || '').toLowerCase().indexOf(q) !== -1; });
+  }
+  if (S_PUDINS.active === 'on') {
+    out = out.filter(function (s) { return !!s.active; });
+  } else if (S_PUDINS.active === 'off') {
+    out = out.filter(function (s) { return !s.active; });
+  }
+  return out;
+}
+function pudimCard(s, idx) {
+  var toggleChecked = s.active ? ' checked' : '';
+  var badgeHtml = s._raw && s._raw.badge
+    ? '<div class="product-card__badge">' + esc(s._raw.badge) + '</div>'
+    : '';
+  return '<div class="product-card">' +
+    '<div class="product-card__image">' +
+      '<div style="width:100%;aspect-ratio:16/10;border-radius:var(--radius-sm);overflow:hidden;background:#1c1512;display:flex;align-items:center;justify-content:center">' +
+        (function () { var src = soSrc(s); return src ? '<img src="' + esc(src) + '" alt="' + esc(s.name) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">' : ''; })() +
+      '</div>' + badgeHtml +
+      '<div class="product-card__toggle">' +
+        '<label class="toggle"><input type="checkbox"' + toggleChecked + ' data-toggle-sobremesa="' + esc(s.id) + '">' +
+        '<span class="toggle__track"><span class="toggle__circle"></span></span></label>' +
+      '</div>' +
+    '</div>' +
+    '<div class="product-card__info">' +
+      '<div style="font-size:.65rem;color:var(--muted);margin-bottom:2px;letter-spacing:0.05em">#' + (idx + 1) + ' · ' + esc(s.id) + '</div>' +
+      '<div class="product-card__name">' + esc(s.name) + '</div>' +
+      '<div class="product-card__desc">' + esc((s._raw && (s._raw.description || s._raw.desc)) || '') + '</div>' +
+      '<div class="product-card__price">' + money(s.price) + '</div>' +
+    '</div>' +
+    '<div class="product-card__actions">' +
+      '<button class="btn btn--ghost btn--sm" type="button" data-edit-sobremesa="' + esc(s.id) + '">Editar</button> ' +
+      '<button class="btn btn--ghost btn--sm" type="button" data-dup-sobremesa="' + esc(s.id) + '">Duplicar</button> ' +
+      '<button class="btn btn--ghost btn--sm btn--danger" type="button" data-del-sobremesa="' + esc(s.id) + '">Excluir</button>' +
+    '</div>' +
+  '</div>';
+}
+function paintPudins(rows) {
+  var all = (rows || []).filter(isPudimRow);
+  var list = filterPudins(rows);
+  var toolbar =
+    '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">' +
+      '<div class="toolbar__search" style="display:flex;gap:8px;align-items:center">' +
+        '<input class="field__input" type="search" id="pudim-q" placeholder="Buscar pudim…" value="' + esc(S_PUDINS.q) + '" style="width:220px;padding:8px 12px;font-size:.82rem">' +
+      '</div>' +
+      '<div class="chips">' +
+        '<button type="button" class="chip' + (S_PUDINS.active === '' ? ' is-on' : '') + '" data-pfilter-active="">Todos</button>' +
+        '<button type="button" class="chip' + (S_PUDINS.active === 'on' ? ' is-on' : '') + '" data-pfilter-active="on">Ativos</button>' +
+        '<button type="button" class="chip' + (S_PUDINS.active === 'off' ? ' is-on' : '') + '" data-pfilter-active="off">Inativos</button>' +
+      '</div>' +
+      '<button class="btn btn--primary btn--sm" type="button" data-new-sobremesa>+ Novo Pudim</button>' +
+    '</div>';
+  toolbar += '<div class="chips" style="margin-bottom:20px">' +
+    '<button type="button" class="chip' + (S_PUDINS.cat === '' ? ' is-on' : '') + '" data-pfilter-cat="">Todas (' + all.length + ')</button>' +
+    PUDIM_CATS.map(function (c) {
+      var n = all.filter(function (s) { return String(s.cat || '') === String(c.id); }).length;
+      return '<button type="button" class="chip' + (S_PUDINS.cat === String(c.id) ? ' is-on' : '') + '" data-pfilter-cat="' + esc(c.id) + '">' + esc(c.name) + ' (' + n + ')</button>';
+    }).join('') + '</div>';
+  if (!list.length) {
+    $('#content').innerHTML = toolbar +
+      '<div class="empty-state"><div class="empty-state__title">Nenhum pudim encontrado</div><div class="empty-state__text">Ajuste os filtros ou clique em + Novo Pudim.</div></div>';
+    return;
+  }
+  var groups = {};
+  list.forEach(function (s) {
+    var k = String(s.cat || 'sem-categoria');
+    if (!groups[k]) { groups[k] = []; }
+    groups[k].push(s);
+  });
+  Object.keys(groups).forEach(function (k) {
+    groups[k].sort(function (a, b) { return (a.position || 0) - (b.position || 0) || (a.name < b.name ? -1 : 1); });
+  });
+  var order = {};
+  PUDIM_CATS.forEach(function (c, i) { order[String(c.id)] = i; });
+  var keys = Object.keys(groups).sort(function (a, b) {
+    var oa = order[a] !== undefined ? order[a] : 999;
+    var ob = order[b] !== undefined ? order[b] : 999;
+    return oa - ob;
+  });
+  var n = 0;
+  var grouped = keys.map(function (k) {
+    var items = groups[k];
+    var cards = items.map(function (s) { n += 1; return pudimCard(s, n - 1); }).join('');
+    return '<section style="margin-bottom:28px">' +
+      '<h3 style="font-size:1rem;margin:0 0 12px;display:flex;align-items:center;gap:8px">' + esc(pudimCatName(k)) +
+      ' <span class="badge badge--brand">' + items.length + '</span></h3>' +
+      '<div class="product-grid">' + cards + '</div></section>';
+  }).join('');
+  $('#content').innerHTML = toolbar + grouped;
+}
+
+function renderPudins() {
+  var toolbar =
+    '<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">' +
+      '<h3 style="font-size:1rem">Menu de Pudins</h3>' +
+      '<button class="btn btn--primary btn--sm" type="button" data-new-sobremesa>+ Novo Pudim</button>' +
+    '</div>';
+  $('#content').innerHTML = toolbar + '<div class="card"><p class="card__hint">Carregando pudins do cardápio…</p></div>';
+  getJ('admin/products').then(function (prods) {
+    var api = (prods || []).filter(function (p) {
+      return String(p.id || '').indexOf('pudim') === 0;
+    }).map(normSobremesaFromProduct);
+    var seen = {};
+    api.forEach(function (s) { seen[s.id] = 1; });
+    var customs = soCustomAll().filter(function (s) {
+      return !seen[String(s.id)] && String(s.id).indexOf('pudim') === 0;
+    }).map(function (s) {
+      return { id: s.id, name: s.name, price: s.price, active: !!s.active, image: s.image || '', position: s.position || 0, cat: s.cat || s.cat_id || '', _api: false };
+    });
+    var rows = api.concat(customs);
+    rows.sort(function (a, b) { return (a.position || 0) - (b.position || 0) || (a.name < b.name ? -1 : 1); });
+    S_SOBREMESAS.rows = rows;
+    S_SOBREMESAS.loaded = true;
+    paintPudins(rows);
+  }, function () {
+    var rows = soCustomAll().filter(function (s) {
+      return String(s.id).indexOf('pudim') === 0;
+    }).map(function (s) {
+      return { id: s.id, name: s.name, price: s.price, active: !!s.active, image: s.image || '', position: s.position || 0, cat: s.cat || s.cat_id || '', _api: false };
+    });
+    S_SOBREMESAS.rows = rows;
+    paintPudins(rows);
+  });
 }
 
 function renderSobremesas() {
@@ -4137,6 +4344,10 @@ function contentClick(e) {
   if (lfa) { S_LASANHAS.active = lfa.getAttribute('data-lfilter-active'); renderLasanhas(); return; }
   var lfc = t.closest('[data-lfilter-cat]');
   if (lfc) { S_LASANHAS.cat = lfc.getAttribute('data-lfilter-cat'); renderLasanhas(); return; }
+  var pfa = t.closest('[data-pfilter-active]');
+  if (pfa) { S_PUDINS.active = pfa.getAttribute('data-pfilter-active'); paintPudins(S_SOBREMESAS.rows || []); return; }
+  var pfc = t.closest('[data-pfilter-cat]');
+  if (pfc) { S_PUDINS.cat = pfc.getAttribute('data-pfilter-cat'); paintPudins(S_SOBREMESAS.rows || []); return; }
 
   var el = t.closest('[data-edit-lasanha]');
   if (el) { var f = findLasanha(el.getAttribute('data-edit-lasanha')); if (f) lasanhaModal(f); return; }
@@ -4313,12 +4524,20 @@ function contentClick(e) {
 }
 
 var _lasSearchTimer = null;
+var _pudimSearchTimer = null;
 function contentInput(e) {
   if (e.target && e.target.id === 'las-q') {
     clearTimeout(_lasSearchTimer);
     _lasSearchTimer = setTimeout(function () {
       S_LASANHAS.q = ($('#las-q') || {}).value || '';
       renderLasanhas();
+    }, 300);
+  }
+  if (e.target && e.target.id === 'pudim-q') {
+    clearTimeout(_pudimSearchTimer);
+    _pudimSearchTimer = setTimeout(function () {
+      S_PUDINS.q = ($('#pudim-q') || {}).value || '';
+      paintPudins(S_SOBREMESAS.rows || []);
     }, 300);
   }
   var t = e.target;
@@ -4780,6 +4999,14 @@ function ingredientModal(item) {
 /* ---------- Ficha Técnica ---------- */
 var S_FICHA = { prods: [], cats: [], status: {} };
 
+/* Categorias fora da operação Pudim Hass: ocultas da Ficha Técnica
+   (lasanhas e seleções — sem ficha e sem insumos no financeiro novo). */
+var FICHA_HIDDEN_CATS = ['selecoes-fechadas', 'selecoes-personalizadas',
+  'classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar'];
+function fichaVisible(p) {
+  return FICHA_HIDDEN_CATS.indexOf(String((p && (p.cat_id || p.cat)) || '')) === -1;
+}
+
 function fichaCardHtml(p, catLabel, hasFicha) {
   var badge = hasFicha === true
     ? '<span class="badge badge--green">Com ficha</span>'
@@ -4818,7 +5045,7 @@ function renderFichaTecnica() {
 }
 
 function paintFichaTecnica() {
-  var prods = S_FICHA.prods || [];
+  var prods = (S_FICHA.prods || []).filter(fichaVisible);
   var cats = S_FICHA.cats || [];
   var catName = {};
   cats.forEach(function (c) { catName[c.id] = c.name || c.id; });
@@ -4851,7 +5078,7 @@ function paintFichaTecnica() {
 
 function fichaMissing(q) {
   q = String(q || '').toLowerCase();
-  var missing = (S_FICHA.prods || []).filter(function (p) { return !S_FICHA.status[p.id]; });
+  var missing = (S_FICHA.prods || []).filter(function (p) { return fichaVisible(p) && !S_FICHA.status[p.id]; });
   if (q) {
     missing = missing.filter(function (p) { return (p.name || '').toLowerCase().indexOf(q) !== -1; });
   }
@@ -4910,8 +5137,8 @@ function fichaNewModal() {
 var S_FH_PRICE = 0;
 var S_FH_CAT = '';
 
-/* Tipo da ficha pela categoria do produto: massa-fresca → massa,
-   molhos-caseiros → molho, categorias de lasanha → lasanha, resto → ''
+/* Tipo da ficha pela categoria do produto: caldas → molho (é líquido,
+   exige volume), categorias de lasanha → lasanha, resto → ''
    (sem campos obrigatórios extras). Espelha ficha_type_for() no PHP. */
 function fichaTypeFor(pid, catId) {
   var c = String(catId || '').toLowerCase();
@@ -4919,8 +5146,7 @@ function fichaTypeFor(pid, catId) {
     var p = (S_FICHA.prods || []).filter(function (x) { return x.id === pid; })[0];
     c = String((p && (p.cat_id || p.cat)) || '').toLowerCase();
   }
-  if (c === 'massa-fresca') { return 'massa'; }
-  if (c === 'molhos-caseiros') { return 'molho'; }
+  if (c === 'caldas') { return 'molho'; }
   if (['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar'].indexOf(c) !== -1) { return 'lasanha'; }
   return '';
 }
@@ -5858,7 +6084,7 @@ function printSellersReport(sellerId) {
    ===================================================================== */
 
 var RENDER = {
-  dashboard: renderDashboard, pedidos: renderPedidos, lasanhas: renderLasanhas,
+  dashboard: renderDashboard, pedidos: renderPedidos, lasanhas: renderLasanhas, pudins: renderPudins,
   tamanhos: renderTamanhos, adicionais: renderAdicionais, bebidas: renderBebidas,
   sobremesas: renderSobremesas, cupons: renderCupons,
   areas: renderAreas, banners: renderBanners, home: renderHome, config: renderConfig,
@@ -6015,6 +6241,7 @@ var RENDER = {
   updateTopbarDate();
   setInterval(function () { updateTopbarClock(); }, 1000);
   updateTopbarClock();
+  cfBoot();
   // Carrega o perfil da sessão ANTES de abrir o app (sem sessão, volta ao login).
   getJ('auth/me').then(function (u) {
     ME = u || null;

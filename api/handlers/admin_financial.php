@@ -8,8 +8,7 @@
 function ficha_type_for(string $catId): string
 {
     $c = mb_strtolower(trim($catId));
-    if ($c === 'massa-fresca') { return 'massa'; }
-    if ($c === 'molhos-caseiros') { return 'molho'; }
+    if ($c === 'caldas') { return 'molho'; }
     if (in_array($c, ['classicos', 'deluxe', 'especiais', 'lowcarb', 'frutosdormar'], true)) { return 'lasanha'; }
     return '';
 }

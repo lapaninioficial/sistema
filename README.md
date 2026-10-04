@@ -43,8 +43,12 @@ lapanini/
     comissão), `sql/13-cancel-orders.sql` → `sql/14-cancel-history.sql`
     (cancelamento com histórico), `sql/21-corrige-categorias.sql`
     (Romeu e Julieta/Califórnia → Sobremesas), `sql/22-2fa-totp.sql` (2FA),
-    `sql/23-lgpd.sql` (consentimentos LGPD) e `sql/24-kits-mini.sql`
-    (renomeia `doces` para Kits Mini em bases antigas).
+     `sql/23-lgpd.sql` (consentimentos LGPD) e `sql/24-kits-mini.sql`
+     (renomeia `doces` para Kits Mini em bases antigas) e por fim
+     `sql/26-pudins-financeiro.sql` (financeiro Pudim Hass: Massa Fresca →
+     Caldas, Molhos Caseiros → Geladinhos, fichas de pudim, remove os
+     insumos e fichas das lasanhas) e `sql/27-tudo-que-vende.sql`
+     (fichas de combos, kits mini, seleções fechadas e bebidas em revenda).
     Os dumps `lapanini.sql`/`lapanini-hostgator.sql` são o snapshot base —
     os incrementais acima são obrigatórios numa instalação nova.
    Para o financeiro: `sql/migration_financial_safe.sql`,
@@ -121,7 +125,7 @@ Exemplo de `POST api/orders`:
   "customer": { "name": "Camila Souza", "phone": "(19) 99900-1122", "email": "camila@email.com" },
   "delivery": { "mode": "entrega", "areaId": "jardim-interlagos", "when": "hoje" },
   "payment": { "method": "pix" },
-  "coupon": "LAPANINI10",
+  "coupon": "PUDIMHASS10",
   "items": [
     { "productId": "file-mignon", "sizeId": "g1000", "qty": 1, "addons": ["queso-extra"] },
     { "productId": "mesa-farta", "qty": 1 },
@@ -135,6 +139,6 @@ Exemplo de `POST api/orders`:
 - Fotos reais: ver `assets/README.md` (nomes = `id` do produto no banco).
 - Ambientes sem PHP/MySQL abrem a loja em modo protótipo (`localStorage`).
 - Dados de demonstração: 33 produtos, 9 categorias, 6 áreas, 9 adicionais,
-  2 cupons (LAPANINI10 ativo) e 2 banners; textos iniciais em `settings`.
+  2 cupons (PUDIMHASS10 ativo) e 2 banners; textos iniciais em `settings`.
 
 > Ajuste horários, taxas, textos e fotos pelo próprio painel — tudo fica no banco.

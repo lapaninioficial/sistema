@@ -6,97 +6,54 @@
    Prioridade: JPG/WebP → SVG mapeado → SVG fallback → placeholder artesanal.
    ===================================================================== */
 
-/* Mapeamento: product ID → nome do arquivo SVG (sem extensão) */
+/* Mapeamento: product ID → nome do arquivo SVG (sem extensão).
+   Só entram aqui produtos COM foto própria; todo o resto usa a imagem
+   genérica (produto-generico.svg). */
 var IMAGE_MAP = {
-  'mesa-farta':            'mesa-farta',
-  'experiencia-mesa':      'experiencia-a-mesa',
-  'curadoria-casa':        'curadoria-da-mesa',
-  'selecao-generosa':      'selecao-generosa-1.5kg',
-  'selecao-compartilhar':  'selecao-compartilhada-1kg',
-  'selecao-essencial':     'selecao-essencial-500g',
-  'bolonhesa-branca':      'bolonhesa-com-molho-branco',
-  'bolonhesa-vermelha':    'bolonhesa-com-molho-vermelho',
-  'brocolis-cream-cheese': 'brocolis-com-cream-cheese',
-  'brocolis-bacon-cream-cheese': 'brocolis-com-bacon-e-cream-cheese',
-  'frango-branca':         'frango-com-molho-branco',
-  'frango-vermelha':       'frango-com-molho-vermelho',
-  'presunto-branca':       'presunto-e-queijo-com-molho-branco',
-  'presunto-vermelha':     'presunto-e-queijo-com-molho-vermelho',
-  'queijos-gorgonzola':    '5-queijos-com-gorgonzola',
-  'gorgonzola-bacon':      '5-queijos-com-gorgonzola-e-bacon',
-  'carne-madeira':         'carne-de-panela-ao-molho-madeira',
-  'frango-requeijao':      'frango-com-requeijao',
-  'cogumelos':             '3-cogumelos',
-  'carne-gorgonzola':      'carne-de-panela-com-gorgonzola',
-  'file-mignon':           'file-mignon-aos-4-queijos',
-  'abobrinha-frango':      'abobrinha-com-frango-cremoso',
-  'camarao-branco':        'lasanha-de-camarao-com-molho-branco',
-  'bacalhau':              'lasanha-de-bacalhau-com-molho-branco',
-  'torta-alfajor':         'torta-alfajor-na-fatia',
-  'chaja':                 'torta-chaja',
-  'choc-belga':            'torta-de-chocolate-belga',
-  'sorvete-alfajor':       'torta-de-sorvete-alfajor',
-  /* TEMPORÁRIO — Kits Mini ainda sem foto própria; reusam a ilustração do
-     sabor correspondente até chegarem as fotos reais (id = slug do banco). */
-  'mini-bolonhesa':        'bolonhesa-com-molho-vermelho',
-  'mini-frango':           'frango-com-requeijao',
-  'mini-queijos':          '5-queijos-com-gorgonzola',
-  'mini-vegetariana':      'brocolis-com-cream-cheese',
-  'mini-file':             'file-mignon-aos-4-queijos',
   'pudim-tradicional':     'pudim-tradicional-da-casa-100g',
   'pudim-tradicional-380g': 'pudim-tradicional-da-casa-380g',
   'pudim-coco':            'pudim-de-coco-130g',
   'pudim-cafe':            'pudim-de-cafe-130g',
   'pudim-doce-leite':      'pudim-de-doce-de-leite-130g',
+  'torta-alfajor':         'torta-alfajor-na-fatia',
+  'chaja':                 'torta-chaja',
+  'choc-belga':            'torta-de-chocolate-belga',
+  'sorvete-alfajor':       'torta-de-sorvete-alfajor',
   'coca-cola-350':         'coca-cola-350',
   'guarana-350':           'guarana-350',
   'suco-laranja':          'suco-laranja',
   'agua-mineral':          'agua-mineral'
 };
 
+/* Imagem genérica (SVG) para produtos sem foto própria. */
+var GENERIC_IMAGE = 'produto-generico';
+
+/* Todas as fotos apontam para a imagem genérica (pedido do dono).
+   O IMAGE_MAP acima fica guardado: para reativar as fotos próprias,
+   volte esta função para `return IMAGE_MAP[id] || GENERIC_IMAGE;`. */
 function resolveImageFile(id) {
-  return IMAGE_MAP[id] || id;
+  return GENERIC_IMAGE;
 }
 
 /* Manifesto dos arquivos reais em assets/img (prioridade: jpg > webp > svg).
    Evita 404 em massa: só requisita o que existe; sem arquivo, vai direto
    ao placeholder gerado (zero requisição). Ao adicionar fotos, atualize aqui. */
 var IMAGE_FILES = {
-  '3-cogumelos': 'webp',
-  '5-queijos-com-gorgonzola': 'webp',
-  '5-queijos-com-gorgonzola-e-bacon': 'webp',
-  'abobrinha-com-frango-cremoso': 'webp',
   'agua-mineral': 'webp',
-  'bolonhesa-com-molho-branco': 'webp',
-  'bolonhesa-com-molho-vermelho': 'webp',
-  'brocolis-com-bacon-e-cream-cheese': 'webp',
-  'brocolis-com-cream-cheese': 'webp',
-  'carne-de-panela-ao-molho-madeira': 'webp',
-  'carne-de-panela-com-gorgonzola': 'webp',
   'coca-cola-350': 'webp',
-  'curadoria-da-mesa': 'webp',
-  'experiencia-a-mesa': 'webp',
   'favicon': 'svg',
-  'file-mignon-aos-4-queijos': 'webp',
-  'frango-com-molho-branco': 'webp',
-  'frango-com-molho-vermelho': 'webp',
-  'frango-com-requeijao': 'webp',
   'guarana-350': 'webp',
   'hero-placeholder': 'svg',
-  'lasanha-de-bacalhau-com-molho-branco': 'webp',
-  'lasanha-de-camarao-com-molho-branco': 'webp',
-  'logo-lapanini-lasanhas': 'webp',
-  'mesa-farta': 'webp',
-  'presunto-e-queijo-com-molho-branco': 'webp',
-  'presunto-e-queijo-com-molho-vermelho': 'webp',
+  'logo-pudim-hass': 'svg',
+  'produto-generico': 'svg',
+  'pudim-com-leite-e-ovos-com-calda-da-hass': 'svg',
+  'pudim-com-leite-e-ovos-com-calda-da-pudim': 'svg',
   'pudim-de-cafe-130g': 'svg',
   'pudim-de-coco-130g': 'svg',
   'pudim-de-doce-de-leite-130g': 'svg',
   'pudim-tradicional-da-casa-100g': 'svg',
   'pudim-tradicional-da-casa-380g': 'svg',
-  'selecao-essencial-500g': 'webp',
   'selecao-compartilhada-1kg': 'svg',
-  'selecao-generosa-1.5kg': 'webp',
   'suco-laranja': 'webp',
   'torta-alfajor-na-fatia': 'svg',
   'torta-chaja': 'svg',
