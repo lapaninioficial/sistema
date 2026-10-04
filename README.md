@@ -1,4 +1,4 @@
-# La Panini — Lasanhas Artesanais
+# Pudim LAPANINI — Pudins Artesanais
 
 Loja virtual + área administrativa. Front-end responsivo (HTML/CSS/JS) em `index.html`
 e painel admin em `admin.html`, com backend em **PHP 8 + MySQL** sob `api/` consumido
@@ -7,7 +7,7 @@ via `fetch` (a loja cai em modo protótipo com `localStorage` se a API não resp
 ## Estrutura
 
 ```
-lapanini/
+pudim/
 ├── index.html        # loja (cardápio, checkout, acompanhar pedido)
 ├── admin.html        # área administrativa (login por sessão)
 ├── assets/           # imagens, favicon, docs de fotos
@@ -32,7 +32,7 @@ lapanini/
 
 1. **Banco:** no cPanel (phpMyAdmin), importe `sql/lapanini.sql` e depois
    `sql/08-users-avatar.sql` (foto de perfil) e `sql/09-baked-fee.sql`
-   (taxa da lasanha assada, editável em Configurações → Preparo).
+   (taxa do pudim assado, editável em Configurações → Preparo).
    Bases já criadas: importe também `sql/02-home-sections.sql` (visibilidade/ordem da home),
    `sql/03-selection-1500.sql` (preços 1,5kg + pool da Seleção Generosa),
    `sql/04-addons-cardapio.sql` (adicionais Borda/Molhos/Extras/Retirar do cardápio) e
@@ -45,7 +45,7 @@ lapanini/
     (Romeu e Julieta/Califórnia → Sobremesas), `sql/22-2fa-totp.sql` (2FA),
      `sql/23-lgpd.sql` (consentimentos LGPD) e `sql/24-kits-mini.sql`
      (renomeia `doces` para Kits Mini em bases antigas) e por fim
-     `sql/26-pudins-financeiro.sql` (financeiro Pudim Hass: Massa Fresca →
+     `sql/26-pudins-financeiro.sql` (financeiro Pudim LAPANINI: Massa Fresca →
      Caldas, Molhos Caseiros → Geladinhos, fichas de pudim, remove os
      insumos e fichas das lasanhas) e `sql/27-tudo-que-vende.sql`
      (fichas de combos, kits mini, seleções fechadas e bebidas em revenda).

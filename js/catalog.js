@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — catálogo completo (versão protótipo).
+   Pudim LAPANINI — catálogo completo (versão protótipo).
    Cada produto tem: id (usado como nome do arquivo de imagem em
    assets/img/<id>.jpg), categoria, preço base, descrição curta e longa,
    ingredientes (com remoção opcional com abatimento), grupo de adicionais,
@@ -23,7 +23,7 @@ var PRODUCTS = [
   /* ==================== Seleções Especiais Fechadas ==================== */
 
   P('mesa-farta', 'selecoes-fechadas', 'Mesa Farta', 356.90,
-    '4 Lasanhas de 1,5kg Congeladas',
+    '4 Pudins de 1,5kg Gelados',
     'São 4 sabores diferentes, cada um servindo até 3 pessoas com conforto: Bolonhesa com molho vermelho, Frango com requeijão, Carne de panela com molho madeira e champignon, 5 queijos com gorgonzola. Prontas para ir do freezer ao forno, mantendo textura e padrão em cada porção.',
     { type: 'kit', old: 405.60, freteGratis: true, badge: '−12% OFF',
       sizes: SIZE_KIT, sizeLabel: '4 unidades de 1,5kg',
@@ -31,14 +31,14 @@ var PRODUCTS = [
       obsNote: 'Seleção fechada (1 unidade de cada sabor). Desconto automático, não cumulativo com cupons. Não válido para cartão alimentação/refeição. Oferta por tempo limitado e sujeita à disponibilidade.' }),
 
   P('experiencia-mesa', 'selecoes-fechadas', 'Experiência à Mesa', 256.15,
-    '4 lasanhas de 1kg + 10% OFF',
+    '4 pudins de 1kg + 10% OFF',
     'São 4 sabores diferentes, prontos para ir do freezer ao forno: Presunto e queijo com molho branco, Frango com requeijão, Bolonhesa com molho branco e Carne de panela com molho madeira e champignon.',
     { type: 'kit', old: 284.60, badge: '−10% OFF', sizes: SIZE_KIT, sizeLabel: '4 unidades de 1kg',
       comp: ['Presunto e queijo com molho branco', 'Frango com requeijão', 'Bolonhesa com molho branco', 'Carne de panela com molho madeira e champignon'],
       obsNote: 'Seleção fechada (1 unidade de cada sabor). Desconto automático, não cumulativo com cupons. Não válido para VR/VA. Aceitamos PIX, crédito, débito e dinheiro. Oferta por tempo limitado e sujeita à disponibilidade.' }),
 
   P('curadoria-casa', 'selecoes-fechadas', 'Curadoria da Casa', 179.00,
-    '5 lasanhas individuais de 500g + 7% OFF.',
+    '5 pudins individuais de 500g + 7% OFF.',
     'São 5 sabores diferentes, prontos para ir do freezer ao forno: Bolonhesa com molho vermelho, 5 Queijos com gorgonzola, Frango com molho branco, Carne de panela com gorgonzola e Presunto com molho branco. Prontas para ir do freezer ao forno, mantendo textura, sabor e padrão. Cada unidade serve 1 pessoa.',
     { type: 'kit', old: 192.50, badge: '−7% OFF', sizes: SIZE_KIT, sizeLabel: '5 unidades de 500g',
       comp: ['Bolonhesa com molho vermelho', '5 Queijos com gorgonzola', 'Frango com molho branco', 'Carne de panela com gorgonzola', 'Presunto com molho branco'],
@@ -47,27 +47,27 @@ var PRODUCTS = [
   /* ==================== Seleções Personalizadas ==================== */
 
   P('selecao-generosa', 'selecoes-personalizadas', 'Seleção Generosa – 1,5kg', 242.73,
-    'Monte seu kit de lasanhas de 1,5kg + 10% OFF.',
+    'Monte seu kit de pudins de 1,5kg + 10% OFF.',
     'Escolha os sabores que preferir e componha sua própria seleção. Pensada para servir com tranquilidade, dividir à mesa e manter a semana organizada com mais previsibilidade.',
     { type: 'selection', min: 3, maxPerFlavor: 2, discount: 0.10, sizeLabel: '1,5kg',
       obsNote: 'OBS: Mínimo de 3 unidades. Até 2 unidades por sabor. Desconto automático, não cumulativo com cupons.',
       pool: ['cogumelos', 'queijos-gorgonzola', 'gorgonzola-bacon', 'bolonhesa-branca', 'bolonhesa-vermelha', 'brocolis-bacon-cream-cheese', 'brocolis-cream-cheese', 'carne-madeira', 'carne-gorgonzola', 'file-mignon', 'frango-branca', 'frango-vermelha', 'frango-requeijao', 'presunto-branca', 'presunto-vermelha'] }),
 
   P('selecao-compartilhar', 'selecoes-personalizadas', 'Seleção Compartilhar', 215.40,
-    'Monte seu kit de lasanhas de 1kg + 7% OFF.',
+    'Monte seu kit de pudins de 1kg + 7% OFF.',
     'Escolha os sabores que preferir e componha sua própria seleção. Pensada para dividir à mesa ou organizar a semana com mais previsibilidade e variedade.',
     { type: 'selection', min: 4, maxPerFlavor: 2, discount: 0.07, sizeLabel: '1kg',
       obsNote: 'Mínimo de 4 unidades. Até 2 unidades por sabor. Desconto automático, não cumulativo com cupons.',
       pool: ['bolonhesa-branca', 'bolonhesa-vermelha', 'brocolis-cream-cheese', 'frango-branca', 'frango-vermelha', 'presunto-branca', 'presunto-vermelha'] }),
 
   P('selecao-essencial', 'selecoes-personalizadas', 'Seleção Essencial', 163.90,
-    'Monte seu kit de lasanhas individuais de 500g + 5% OFF.',
+    'Monte seu kit de pudins individuais de 500g + 5% OFF.',
     'Escolha os sabores que preferir e componha sua própria seleção. Ideal para organizar a rotina com variedade e manter o freezer bem resolvido.',
     { type: 'selection', min: 5, maxPerFlavor: 2, discount: 0.05, sizeLabel: '500g',
       obsNote: 'Mínimo de 5 unidades. Até 2 unidades por sabor. Desconto automático, não cumulativo com cupons.',
       pool: ['bolonhesa-branca', 'bolonhesa-vermelha', 'brocolis-cream-cheese', 'frango-branca', 'frango-vermelha', 'presunto-branca', 'presunto-vermelha'] }),
 
-  /* ==================== Lasanhas Sabores Clássicos ==================== */
+  /* ==================== Pudins Sabores Clássicos ==================== */
 
   P('bolonhesa-branca', 'classicos', 'Bolonhesa com Molho Branco', 38.90,
     'Carne bovina moída, pomarola e especiarias ao molho branco.',
@@ -119,7 +119,7 @@ var PRODUCTS = [
 
   P('presunto-branca', 'classicos', 'Presunto e Queijo com Molho Branco', 33.90,
     'Presunto premium com molho branco da casa.',
-    'Uma lasanha bem brasileira, assim é a lasanha de presunto e queijo da La Panini. O diferencial está na escolha do presunto premium. Montada com massa fresca, presunto, queijo e molho branco.',
+    'Uma lasanha bem brasileira, assim é a lasanha de presunto e queijo da Pudim LAPANINI. O diferencial está na escolha do presunto premium. Montada com massa fresca, presunto, queijo e molho branco.',
     { tags: ['Clássico'], ingredients: [
       { label: 'Presunto premium' }, { label: 'Massa fresca' },
       { label: 'Queijo muçarela', rem: -2.90 }, { label: 'Molho branco da casa', rem: -2.40 } ] }),
@@ -131,7 +131,7 @@ var PRODUCTS = [
       { label: 'Presunto premium' }, { label: 'Massa fresca' },
       { label: 'Queijo muçarela', rem: -2.90 }, { label: 'Molho vermelho' } ] }),
 
-  /* ==================== Lasanhas Sabores Deluxe ==================== */
+  /* ==================== Pudins Sabores Deluxe ==================== */
 
   P('queijos-gorgonzola', 'deluxe', 'Queijos com Gorgonzola', 37.90,
     'Muçarela, provolone, parmesão e gorgonzola.',
@@ -149,7 +149,7 @@ var PRODUCTS = [
 
   P('carne-madeira', 'deluxe', 'Carne de Panela ao Molho Madeira', 41.90,
     'Carne desfiada, madeira e champignon.',
-    'A lasanha de carne de panela é um sucesso na La Panini. Carne temperada com especiarias, cozida até desfiar, com molho madeira especial. Montada com molho branco, queijo muçarela e champignon.',
+    'A lasanha de carne de panela é um sucesso na Pudim LAPANINI. Carne temperada com especiarias, cozida até desfiar, com molho madeira especial. Montada com molho branco, queijo muçarela e champignon.',
     { tags: ['Deluxe'], ingredients: [
       { label: 'Carne de panela desfiada' }, { label: 'Molho madeira' },
       { label: 'Champignon' }, { label: 'Massa fresca' }, { label: 'Muçarela premium', rem: -2.90 } ] }),
@@ -161,7 +161,7 @@ var PRODUCTS = [
       { label: 'Frango desfiado' }, { label: 'Requeijão' }, { label: 'Molho vermelho' },
       { label: 'Queijo muçarela', rem: -2.90 }, { label: 'Molho branco da casa', rem: -2.40 } ] }),
 
-  /* ==================== Lasanhas Sabores Especiais ==================== */
+  /* ==================== Pudins Sabores Especiais ==================== */
 
   P('cogumelos', 'especiais', 'Cogumelos', 46.90,
     'Shitake, shimeji e paris em molho especial.',
@@ -185,7 +185,7 @@ var PRODUCTS = [
       { label: 'Filé mignon' }, { label: 'Gorgonzola' }, { label: 'Provolone' },
       { label: 'Parmesão' }, { label: 'Massa fresca' }, { label: 'Muçarela', rem: -2.90 } ] }),
 
-  /* ==================== Lasanhas Low Carb ==================== */
+  /* ==================== Pudins Low Carb ==================== */
 
   P('abobrinha-frango', 'lowcarb', 'Abobrinha com Frango Cremoso', 39.90,
     'Massa trocada por abobrinha, recheio de frango cremoso.',
@@ -210,7 +210,7 @@ var PRODUCTS = [
       { label: 'Bacalhau desfiado' }, { label: 'Ervas frescas' },
       { label: 'Molho misto' }, { label: 'Queijo muçarela', rem: -2.90 }, { label: 'Massa fresca' } ] }),
 
-  /* ==================== Lasanhas Mini (Eventos) ==================== */
+  /* ==================== Pudins Mini (Eventos) ==================== */
 
   P('mini-bolonhesa', 'doces', 'Kit Mini Bolonhesa', 179.00,
     '25 unidades de 300g. Perfeita para eventos.',
@@ -378,13 +378,13 @@ var PRODUCTS = [
 
   P('romeu-julieta', 'sobremesas', 'Romeu e Julieta', 39.90,
     'Queijo muçarela e goiabada no molho belga.',
-    'Lasanha Romeu e Julieta com queijo muçarela e goiabada, finalizada com molho belga. Sob encomenda.',
+    'Romeu e Julieta com queijo muçarela e goiabada, finalizado com molho belga. Sob encomenda.',
     { sizes: [{ id: 'u', label: 'Unidade', factor: 1 }], addonGroup: 'doce', tags: ['Sob encomenda'], encomenda: true, ingredients: [
       { label: 'Muçarela' }, { label: 'Goiabada' }, { label: 'Molho belga' } ] }),
 
   P('california', 'sobremesas', 'Califórnia', 39.90,
     'Figo, pêssego e abacaxi no molho belga.',
-    'Lasanha Califórnia com figo, pêssego e abacaxi no molho belga da casa. Sob encomenda.',
+    'Califórnia com figo, pêssego e abacaxi no molho belga da casa. Sob encomenda.',
     { sizes: [{ id: 'u', label: 'Unidade', factor: 1 }], addonGroup: 'doce', tags: ['Sob encomenda'], encomenda: true, ingredients: [
       { label: 'Figo' }, { label: 'Pêssego' }, { label: 'Abacaxi' }, { label: 'Molho belga' } ] }),
 
@@ -412,7 +412,7 @@ var PRODUCTS = [
 
   P('coca-cola-350', 'bebidas', 'Coca-Cola', 6.90,
     'O sabor que nunca passa da hora.',
-    'Coca-Cola lata 350ml gelada, perfeita para acompanhar sua lasanha.',
+    'Coca-Cola lata 350ml gelada, perfeita para acompanhar seu pudim.',
     { sizes: [{ id: 'u', label: '350ml · gelada', factor: 1 }], addonGroup: '', tags: ['Lata'], ingredients: [] }),
 
   P('guarana-350', 'bebidas', 'Guaraná Antarctica', 5.90,
@@ -435,7 +435,7 @@ function getById(id) {
   return PRODUCTS.filter(function (p) { return p.id === id; })[0] || null;
 }
 
-/* Cadastro de preços da lasanha de 1,5kg (preço cheio por sabor).
+/* Cadastro de preços do pudim de 1,5kg (preço cheio por sabor).
    No popup da seleção cada unidade sai com o desconto do kit aplicado. */
 var PRICE_1500 = {
   'cogumelos': 125.90,

@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — Lasanhas Artesanais · Protótipo navegável (front-end puro)
+   Pudim LAPANINI — Pudins Artesanais · Protótipo navegável (front-end puro)
    Fase de validação visual. Nenhum cálculo é definitivo: na versão
    funcional, preços, descontos, taxas e totais são recalculados no
    servidor (PHP 8 + MySQL + PDO). Este arquivo: identidade e dados
@@ -11,8 +11,8 @@
 /* ---------- Identidade ---------- */
 
 var BRAND = {
-  name: 'La Panini',
-  tagline: 'Lasanhas Artesanais',
+  name: 'Pudim LAPANINI',
+  tagline: 'Pudins Artesanais',
   phone: '(19) 99404-8354',
   whats: 'https://wa.me/5519994048354',
   address: 'Rua Osvaldo Serra, 193 — Jardim Interlagos',
@@ -50,19 +50,19 @@ var CATEGORIES = [
   { id: 'pudins',                   name: 'Pudins Artesanais',             short: 'Pudins',               kicker: 'Cremosos, gelados e feitos todos os dias' },
   { id: 'selecoes-fechadas',       name: 'Seleções Especiais Fechadas', short: 'Seleções Fechadas',     kicker: 'Combinações pensadas para servir com equilíbrio e praticidade' },
   { id: 'selecoes-personalizadas', name: 'Seleções Personalizadas',     short: 'Personalizadas',       kicker: 'Monte sua seleção escolhendo os sabores que preferir.' },
-  { id: 'classicos',               name: 'Lasanhas Sabores Clássicos',  short: 'Clássicos',            kicker: 'Nossos sabores clássicos, feitos com massa fresca todos os dias' },
-  { id: 'deluxe',                  name: 'Lasanhas Sabores Deluxe',     short: 'Deluxe',               kicker: 'Lasanhas para servir com equilíbrio e praticidade' },
-  { id: 'especiais',               name: 'Lasanhas Sabores Especiais',  short: 'Especiais',            kicker: 'Nossos sabores especiais' },
-  { id: 'lowcarb',                 name: 'Lasanhas Low Carb',           short: 'Low Carb',             kicker: 'Nossos sabores low carb' },
-  { id: 'frutosdormar',            name: 'Frutos do Mar',               short: 'Frutos do Mar',        kicker: 'Lasanhas de frutos do mar' },
-  { id: 'doces',                   name: 'Kits Mini',                short: 'Kits Mini',              kicker: 'Lasanhas individuais para eventos — calcule pela quantidade de convidados' },
+  { id: 'classicos',               name: 'Pudins Sabores Clássicos',   short: 'Clássicos',            kicker: 'Nossos sabores clássicos, feitos todos os dias' },
+  { id: 'deluxe',                  name: 'Pudins Sabores Deluxe',      short: 'Deluxe',               kicker: 'Pudins para servir com equilíbrio e praticidade' },
+  { id: 'especiais',               name: 'Pudins Sabores Especiais',   short: 'Especiais',            kicker: 'Nossos sabores especiais' },
+  { id: 'lowcarb',                 name: 'Pudins Low Carb',            short: 'Low Carb',             kicker: 'Nossos sabores low carb' },
+  { id: 'frutosdormar',            name: 'Frutos do Mar',               short: 'Frutos do Mar',        kicker: 'Pudins de frutos do mar' },
+  { id: 'doces',                   name: 'Kits Mini',                short: 'Kits Mini',              kicker: 'Pudins individuais para eventos — calcule pela quantidade de convidados' },
   { id: 'sobremesas',              name: 'Sobremesas Variadas',         short: 'Sobremesas',           kicker: 'Para adoçar depois da mesa' },
   { id: 'mais-pedidos',            name: 'Os Mais Pedidos',             short: 'Mais Pedidos',         kicker: 'Os queridinhos da casa' },
   { id: 'promocao-do-dia',         name: 'Promoção do Dia!',            short: 'Promoção',             kicker: 'Ofertas por tempo limitado' },
   { id: 'top-mais-vendidos',       name: 'Top Mais Vendidos!',          short: 'Top Vendidos',         kicker: 'Os campeões de venda' },
   { id: 'massa-fresca',             name: 'Massa Fresca da Casa',        short: 'Massa Fresca',         kicker: 'Massa fresca artesanal, feita na casa' },
   { id: 'molhos-caseiros',          name: 'Molhos Caseiros',             short: 'Molhos',               kicker: 'Molhos artesanais feitos na casa, por litro' },
-  { id: 'bebidas',                 name: 'Escolha sua bebida',          short: 'Bebidas',              kicker: 'Bebidas para acompanhar sua lasanha' }
+  { id: 'bebidas',                 name: 'Escolha sua bebida',          short: 'Bebidas',              kicker: 'Bebidas para acompanhar seu pudim' }
 ];
 
 /* ---------- Adicionais (versão funcional terá config: mínimo/máximo e seleção única ou múltipla) ---------- */

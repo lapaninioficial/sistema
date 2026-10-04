@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — sistema de imagens locais.
+   Pudim LAPANINI — sistema de imagens locais.
    Mapeamento de IDs de produto para arquivos de imagem reais.
    Prioridade: JPG/WebP → SVG mapeado → SVG fallback → placeholder artesanal.
    ===================================================================== */
@@ -189,7 +189,7 @@ function dishSVG(id, w, h) {
       '<path d="M' + (w * 0.7) + ' ' + (h * 0.26) + ' C' + (w * 0.66) + ' ' + (h * 0.15) + ', ' + (w * 0.74) + ' ' + (h * 0.1) + ', ' + (w * 0.7) + ' ' + (h * 0.02) + '" stroke="#FFF8F1" stroke-width="4" fill="none" opacity="0.22" stroke-linecap="round"/>';
   }
 
-  return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="La Panini — prato artesanal" preserveAspectRatio="xMidYMid slice">' +
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Pudim LAPANINI — prato artesanal" preserveAspectRatio="xMidYMid slice">' +
     '<defs>' +
       '<linearGradient id="bgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + pal.back[0] + '"/><stop offset="1" stop-color="' + pal.back[1] + '"/></linearGradient>' +
       '<radialGradient id="glow" cx="0.5" cy="0.35" r="0.7"><stop offset="0" stop-color="#F26B21" stop-opacity="0.22"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>' +

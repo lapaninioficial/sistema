@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!--
   =====================================================================
-  Pudim Hass — Painel de Gestão (admin.html)
+  Pudim LAPANINI — Painel de Gestão (admin.html)
   ---------------------------------------------------------------------
-  Paleta = MESMA da loja (css/style.css — Vinho/Bordeaux Pudim Hass):
+  Paleta = MESMA da loja (css/style.css — Vinho/Bordeaux Pudim LAPANINI):
     --color-wine-light:    #b94e4c  · tags, ícones, bordas sutis
     --color-wine-primary:  #973b39  · CTA principal, preços (tema claro)
     --color-wine-dark:     #752726  · header, hover escuro
@@ -34,10 +34,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="Pudim Hass — Painel de Gestão. Área restrita para pedidos, cardápio, cupons, entregas e configurações da loja.">
+  <meta name="description" content="Pudim LAPANINI — Painel de Gestão. Área restrita para pedidos, cardápio, cupons, entregas e configurações da loja.">
   <meta name="theme-color" id="meta-theme" content="#320000">
   <meta name="color-scheme" content="dark light">
-  <title>Pudim Hass — Painel de Gestão</title>
+  <title>Pudim LAPANINI — Painel de Gestão</title>
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -127,7 +127,7 @@
 
   <!-- Splash exibido até auth/me liberar #app (ou redirecionar ao login) -->
   <div class="admin-boot" id="admin-boot" role="status" aria-live="polite">
-    <img src="assets/img/logo-pudim-hass.svg?v=20261004lapanini1" alt="La Panini" width="270" height="54">
+    <img src="assets/img/logo-pudim-hass.svg?v=20261004pudim2" alt="Pudim LAPANINI" width="270" height="54">
     <div class="admin-boot__bar" aria-hidden="true"><i></i></div>
     <p>Carregando painel de gestão…</p>
     <small>Se travar aqui, confira Apache + MySQL e <code>app/config.php</code> na HostGator, depois recarregue.</small>
@@ -138,7 +138,7 @@
     <aside class="sidebar" aria-label="Navegação do painel">
       <div class="sidebar__brand">
         <div class="brand-logo">
-          <img src="assets/img/logo-pudim-hass.svg?v=20261004lapanini1" alt="La Panini" width="80" height="16">
+          <img src="assets/img/logo-pudim-hass.svg?v=20261004pudim2" alt="Pudim LAPANINI" width="80" height="16">
         </div>
         <div class="sidebar__brand-info">
           <span class="sidebar__brand-sub">Painel de Gestão</span>
@@ -309,13 +309,13 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <noscript>
-    <p style="padding:1rem;text-align:center;background:#973b39;color:#fff;">Ative o JavaScript para usar o painel Pudim Hass.</p>
+    <p style="padding:1rem;text-align:center;background:#973b39;color:#fff;">Ative o JavaScript para usar o painel Pudim LAPANINI.</p>
   </noscript>
 
   <script>window.TURNSTILE_SITE_KEY = ''; /* Cole aqui a Site Key do Cloudflare Turnstile (chave pública). Vazio = proteção desligada. */</script>
-  <script src="js/admin-mock.js?v=20261004loja1"></script>
-  <script src="js/art.js?v=20261004lapanini1"></script>
-  <script src="js/admin.js?v=20261004eta2"></script>
+  <script src="js/admin-mock.js?v=20261004pudim2"></script>
+  <script src="js/art.js?v=20261004pudim2"></script>
+  <script src="js/admin.js?v=20261004pudim2"></script>
   <script>
   /* Tema claro/escuro do painel (mesmas cores da loja) + fim do splash.
      Não mexe no admin.js: só observa #app e o alterna via data-theme. */

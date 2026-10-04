@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — Lasanhas Artesanais · protótipo navegável (front-end puro)
+   Pudim LAPANINI — Pudins Artesanais · protótipo navegável (front-end puro)
    Estrutura seguindo o modelo de delivery one-page: seções por âncora,
    sacola em drawer com checkout embutido, pedido acompanhado por e-mail,
    conta simulada e cupom copiável. Na versão funcional (PHP 8 + MySQL +
@@ -23,7 +23,7 @@ function uid() {
   return 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-/* Cardápio só de pudins: esconde lasanhas e demais categorias da vitrine.
+/* Cardápio só de pudins: esconde demais categorias da vitrine.
    true = vitrine mostra apenas o "Menu de Pudins". */
 var PUDIM_ONLY = true;
 
@@ -97,7 +97,7 @@ function payEnabled(id) {
    os itens vêm da API (admin) com fallback estático (data.js). */
 var ADDONS_VISIBLE = true;
 
-/* Preparo (Congelada/Assada) só faz sentido para lasanhas nos tamanhos padrão. */
+/* Preparo (Congelada/Assada) só faz sentido para pudins nos tamanhos padrão. */
 function hasPreparo(p) {
   if (!p || p.type !== 'reg' || !p.sizes) { return false; }
   return p.sizes.some(function (s) { return s.id === 'g500' || s.id === 'g1000' || s.id === 'g1500'; });
@@ -519,7 +519,7 @@ var SEL_MENU = {
   'file-mignon': { name: 'Filé Mignon aos 4 Queijos', desc: 'Filé mignon estruturado com quatro queijos que trazem cremosidade e presença.' },
   'frango-branca': { name: 'Frango com Molho Branco', desc: 'Frango bem preparado envolvido por molho branco suave e equilibrado.' },
   'frango-vermelha': { name: 'Frango com Molho Vermelho', desc: 'Clássico e versátil, com molho vermelho encorpado e preparo cuidadoso.' },
-  'frango-requeijao': { name: 'Frango com Requeijão', desc: 'Quer uma lasanha mais cremosa? A de frango com requeijão une o molho vermelho, a suavidade do molho branco e a cremosidade do requeijão.' },
+  'frango-requeijao': { name: 'Frango com Requeijão', desc: 'Quer um pudim mais cremoso? O de frango com requeijão une o molho vermelho, a suavidade do molho branco e a cremosidade do requeijão.' },
   'presunto-branca': { name: 'Presunto e Queijo com Molho Branco', desc: 'Uma combinação tradicional, com cremosidade e leveza na medida certa.' },
   'presunto-vermelha': { name: 'Presunto e Queijo com Molho Vermelho', desc: 'Simplicidade bem executada, com molho vermelho estruturando a receita.' }
 };
@@ -743,9 +743,9 @@ function buildProductModal() {
         var serves = modalServesLabel(s.id);
         var servesHtml = serves ? '<span class="size-pill__per">' + esc(serves) + '</span>' : '';
         return '<label class="size-pill' + sel + '" data-size-card="' + s.id + '">' +
-          '<input type="radio" name="c-size" value="' + s.id + '" data-size="' + s.id + '"' + (isSel ? ' checked' : '') + ' aria-label="Lasanha ' + esc(meta.short) + (serves ? ' ' + esc(serves) : '') + ' por ' + PRICING.money(price) + '">' +
+          '<input type="radio" name="c-size" value="' + s.id + '" data-size="' + s.id + '"' + (isSel ? ' checked' : '') + ' aria-label="Pudim ' + esc(meta.short) + (serves ? ' ' + esc(serves) : '') + ' por ' + PRICING.money(price) + '">' +
           '<span class="size-pill__radio" aria-hidden="true"></span>' +
-          '<span class="size-pill__txt"><span class="size-pill__name">Lasanha ' + esc(meta.short) + isBest + '</span>' + servesHtml + '</span>' +
+          '<span class="size-pill__txt"><span class="size-pill__name">Pudim ' + esc(meta.short) + isBest + '</span>' + servesHtml + '</span>' +
           '<span class="size-pill__price">' + PRICING.money(price) + '</span></label>';
       }).join('') + '</div></fieldset>';
   }
@@ -837,7 +837,7 @@ function buildProductModal() {
         '</div>' +
         '<div class="m-right">' +
         '<div class="modal__body">' +
-          '<p class="m-crumb">' + productNum(p) + ' · ' + esc(catShort(p.cat)) + ' · La Panini</p>' +
+          '<p class="m-crumb">' + productNum(p) + ' · ' + esc(catShort(p.cat)) + ' · Pudim LAPANINI</p>' +
           '<h2 class="modal__title">' + esc(p.name) + '</h2>' +
           '<p class="m-proof">★ 4,9 · +800 avaliações · feito em pequenos lotes</p>' +
           '<p class="modal__price-line">' +
@@ -1049,7 +1049,7 @@ function renderSelectionModal() {
         '</div>' +
         '<div class="m-right">' +
         '<div class="modal__body">' +
-          '<p class="m-crumb">' + productNum(p) + ' · ' + esc(catShort(p.cat)) + ' · La Panini</p>' +
+          '<p class="m-crumb">' + productNum(p) + ' · ' + esc(catShort(p.cat)) + ' · Pudim LAPANINI</p>' +
           '<h2 class="modal__title">' + esc(p.name) + '</h2>' +
           '<p class="m-proof">★ 4,9 · +800 avaliações · feito em pequenos lotes</p>' +
           '<p class="modal__price-line">' +
@@ -1278,7 +1278,7 @@ function renderCartMode() {
     ? '<div class="cart-rows">' + S.cart.items.map(cartRowHtml).join('') + '</div>'
     : '<div class="cart-empty">' + ICON_BAG +
       '<p>Sua sacola está vazia.</p>' +
-      '<p style="margin-top:.4rem">Explore o cardápio e escolha suas lasanhas.</p></div>';
+      '<p style="margin-top:.4rem">Explore o cardápio e escolha seus pudins.</p></div>';
 
   body.innerHTML = quickAccessHtml() + itemsHtml;
 
@@ -2107,7 +2107,7 @@ function renderEventCalc() {
     }).join('');
 
     var minNote = showMin
-      ? '<p class="event-hint event-hint--warn">Pedido mínimo de ' + minOrder + ' unidades · Cada mini lasanha pesa 300g</p>'
+      ? '<p class="event-hint event-hint--warn">Pedido mínimo de ' + minOrder + ' unidades · Cada mini pudim pesa 300g</p>'
       : '';
 
     tableHtml =
@@ -2127,7 +2127,7 @@ function renderEventCalc() {
       '</div>';
   }
 
-  var waText = encodeURIComponent('Olá! Gostaria de solicitar um orçamento para meu evento com as mini lasanhas La Panini.');
+  var waText = encodeURIComponent('Olá! Gostaria de solicitar um orçamento para meu evento com os mini pudins Pudim LAPANINI.');
   var waLink = BRAND.whats + '?text=' + waText;
 
   return '<div class="event-calc">' +
@@ -2135,7 +2135,7 @@ function renderEventCalc() {
       '<div class="event-calc__header">' +
         '<div class="event-calc__header-left">' +
           '<h3 class="event-calc__title">Calcule para seu evento</h3>' +
-          '<p class="event-calc__desc">Quantas convidados? Veja a estimativa de mini lasanhas.</p>' +
+          '<p class="event-calc__desc">Quantas convidados? Veja a estimativa de mini pudins.</p>' +
           '<span class="event-calc__cta-text">Solicite sua encomenda</span>' +
         '</div>' +
         '<a class="event-calc__wa" href="' + waLink + '" target="_blank" rel="noopener">' +
@@ -2145,7 +2145,7 @@ function renderEventCalc() {
       '</div>' +
       '<div class="event-calc__body">' +
         '<div class="event-calc__input-group">' +
-          '<label class="event-calc__label" for="event-guests">Monte seu kit: mínimo de 25 mini lasanhas de 300g para evento</label>' +
+          '<label class="event-calc__label" for="event-guests">Monte seu kit: mínimo de 25 mini pudins de 300g para evento</label>' +
           '<div class="event-calc__stepper">' +
             '<button type="button" class="event-calc__btn" data-event-guests="dec" aria-label="Diminuir">−</button>' +
             '<input class="event-calc__input" id="event-guests" type="number" min="25" max="999" value="' + guests + '" data-event-guests-input>' +
@@ -2166,7 +2166,7 @@ function renderEventCalc() {
 var TRACK_STEPS = [
   { name: 'Recebido', desc: 'O pedido chegou à nossa cozinha.', at: 0, key: 'recebido' },
   { name: 'Confirmado', desc: 'Cozinha e pagamento confirmados.', at: 2, key: 'confirmado' },
-  { name: 'Em preparação', desc: 'Suas lasanhas estão sendo montadas.', at: 10, key: 'preparacao' },
+  { name: 'Em preparação', desc: 'Seus pudins estão sendo preparados.', at: 10, key: 'preparacao' },
   { name: 'Saiu para entrega', desc: 'A caminho de você. Fique de olho no WhatsApp.', at: 22, key: 'entrega' },
   { name: 'Entregue', desc: 'Bom apetite! Avalie seu pedido.', at: 42, key: 'entregue' }
 ];
@@ -2972,8 +2972,8 @@ function styleBrandWords() {
   for (var i = 0; i < els.length; i++) {
     if (els[i].querySelector('.logo-word')) { continue; }
     var t = els[i].textContent || '';
-    if (t.indexOf('Pudim Hass') === -1) { continue; }
-    els[i].innerHTML = esc(t).replace(/Pudim Hass/g,
+    if (t.indexOf('Pudim Hass') === -1 && t.indexOf('Pudim LAPANINI') === -1) { continue; }
+    els[i].innerHTML = esc(t).replace(/Pudim (Hass|LAPANINI)/g,
       '<span class="logo-word"><span class="logo-word__p">Pudim</span> <span class="logo-word__h">LAPANINI</span></span>');
   }
 }
@@ -3009,7 +3009,7 @@ function initXsHoverPreview() {
   var modal = $('#modal');
   if (!modal || modal._xsHoverBound) { return; }
   modal._xsHoverBound = true;
-  /* Preview em camada: a lasanha segue fixa em destaque; a foto do item
+  /* Preview em camada: o pudim segue fixo em destaque; a foto do item
      (bebida/sobremesa) aparece por cima com fade, sem trocar a base. */
   function mediaBox() { return modal.querySelector('.modal__media'); }
   function previewImg(box) {
@@ -3139,7 +3139,7 @@ function buildWhatsMessage(order) {
   var d = order.delivery || {};
   var payNames = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão' };
   var pay = order.payment || {};
-  var msg = ['*NOVO PEDIDO #' + order.number + ' — LA PANINI*', ''].concat(lines).concat([
+  var msg = ['*NOVO PEDIDO #' + order.number + ' — PUDIM LAPANINI*', ''].concat(lines).concat([
     '',
     'Subtotal: ' + PRICING.money(order.subtotal || 0)
   ]);

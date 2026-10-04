@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — Aviso LGPD (consentimento de privacidade)
+   Pudim LAPANINI — Aviso LGPD (consentimento de privacidade)
    Banner exibido na primeira visita; a escolha fica no localStorage.
    ===================================================================== */
 

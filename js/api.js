@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
-   La Panini — camada de integração com a API (versão funcional PHP/MySQL).
+   Pudim LAPANINI — camada de integração com a API (versão funcional PHP/MySQL).
    A loja tenta usar o backend para: pedidos novos, acompanhamento e conta.
    Se a API não responder (ex.: abrir via file://), o app.js cai no modo
    protótipo (localStorage) sem quebrar nada.
